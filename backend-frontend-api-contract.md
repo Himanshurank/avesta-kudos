@@ -184,6 +184,40 @@ Response (200 OK):
 
 ### User Management
 
+#### Add User
+
+```
+POST /users
+```
+
+Request Body:
+
+```json
+{
+  "email": "newuser@example.com",
+  "password": "securePassword123",
+  "name": "New User",
+  "roleIds": 2
+}
+```
+
+Response (201 Created):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "email": "newuser@example.com",
+    "name": "New User",
+    "roleIds": 2,
+    "approvalStatus": "Approved",
+    "createdAt": "2023-04-01T12:00:00Z",
+    "updatedAt": "2023-04-01T12:00:00Z"
+  }
+}
+```
+
 #### Get All Users
 
 ```
@@ -242,12 +276,7 @@ Response (200 OK):
     "id": 1,
     "email": "user@example.com",
     "name": "John Doe",
-    "roles": [
-      {
-        "id": 2,
-        "name": "ADMIN"
-      }
-    ],
+    "roleId": 2,
     "approvalStatus": "Approved",
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T12:00:00Z"
@@ -266,7 +295,7 @@ Request Body:
 ```json
 {
   "name": "Updated Name",
-  "roleIds": [1, 2] // Only SuperAdmin can update roles
+  "roleIds": 2 // Only SuperAdmin can update roles
 }
 ```
 
@@ -279,16 +308,7 @@ Response (200 OK):
     "id": 1,
     "email": "user@example.com",
     "name": "Updated Name",
-    "roles": [
-      {
-        "id": 1,
-        "name": "SUPER_ADMIN"
-      },
-      {
-        "id": 2,
-        "name": "ADMIN"
-      }
-    ],
+    "roleIds": 2,
     "approvalStatus": "Approved",
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T13:00:00Z"
@@ -324,7 +344,7 @@ Request Body:
 ```json
 {
   "approvalStatus": "Approved|Rejected",
-  "roleIds": [2, 3] // Required when approving
+  "roleIds": 2 // Required when approving
 }
 ```
 
