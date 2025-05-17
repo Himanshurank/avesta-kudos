@@ -8,7 +8,58 @@ import { PaginatedResult } from "@/core/domain/interfaces/IKudosRepository";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
 
-// Available filter options
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const cookies = parseCookies(context);
+  const token = cookies.auth_token;
+
+  if (!token) {
+    return {
+      redirect: {
+        destination: "/auth/login",
+        permanent: false,
+      },
+    };
+  }
+
+  try {
+    const { req, res } = context;
+    const serverKudosServices = createKudosServices(token, { req, res });
+
+    const initialKudosData =
+      await serverKudosServices.getAllKudosUseCase.execute({
+        page: 1,
+        limit: ITEMS_PER_PAGE,
+      });
+    console.log(initialKudosData, "initialKudosData==========================");
+
+    return {
+      props: {
+        initialKudosData: JSON.parse(JSON.stringify(initialKudosData)),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching kudos on server:", error);
+
+    if (
+      error instanceof Error &&
+      (error.message.includes("Authentication required") ||
+        error.message.includes("UNAUTHORIZED"))
+    ) {
+      return {
+        redirect: {
+          destination: "/auth/login",
+          permanent: false,
+        },
+      };
+    }
+
+    return {
+      props: {
+        initialKudosData: null,
+      },
+    };
+  }
+};
 const teams = [
   "All Teams",
   "Engineering",
@@ -164,80 +215,3 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
     />
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Get auth token from cookies
-  const cookies = parseCookies(context);
-  const token = cookies.auth_token;
-
-  console.log("Server-side props for kudos page");
-  console.log(
-    "Auth token from cookies:",
-    token ? "Token exists" : "No token found"
-  );
-
-  // If no token, redirect to login
-  if (!token) {
-    console.log("No auth token found, redirecting to login");
-    return {
-      redirect: {
-        destination: "/auth/login",
-        permanent: false,
-      },
-    };
-  }
-
-  try {
-    console.log(
-      "Creating server-side kudos services with token and essential context"
-    );
-    // Extract only req/res that nookies needs
-    const { req, res } = context;
-    // Create a server-side instance of kudos services with the token and minimal context
-    const serverKudosServices = createKudosServices(token, { req, res });
-
-    console.log("Fetching kudos data on server...");
-    // Fetch initial kudos data on the server
-    const initialKudosData =
-      await serverKudosServices.getAllKudosUseCase.execute({
-        page: 1,
-        limit: ITEMS_PER_PAGE,
-      });
-    console.log(
-      `Kudos data fetched successfully: ${initialKudosData.data.length} items`
-    );
-
-    // Serialize the data to ensure it's compatible with Next.js props
-    // This ensures Date objects and complex types are properly handled
-    return {
-      props: {
-        initialKudosData: JSON.parse(JSON.stringify(initialKudosData)),
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching kudos on server:", error);
-
-    // If there's an authentication error, redirect to login
-    if (
-      error instanceof Error &&
-      (error.message.includes("Authentication required") ||
-        error.message.includes("UNAUTHORIZED"))
-    ) {
-      console.log("Authentication error, redirecting to login");
-      return {
-        redirect: {
-          destination: "/auth/login",
-          permanent: false,
-        },
-      };
-    }
-
-    // Return null data if there's an error
-    console.log("Returning null data due to error");
-    return {
-      props: {
-        initialKudosData: null,
-      },
-    };
-  }
-};

@@ -25,35 +25,19 @@ export function createKudosServices(
   // Services
   const configService = new ConfigService();
 
-  // Create storage service with context if available
   const storageService = new HybridStorageService(context);
 
-  // If a server-side token is provided and we're on the server,
-  // manually set the auth token in the storage service
   if (serverSideToken && isServer) {
-    console.log("[createKudosServices] Setting server-side auth token");
-    // Double check that token is being stored
     storageService.setItem("auth_token", serverSideToken);
-
-    // Verify token was stored
-    const storedToken = storageService.getItem("auth_token");
-    console.log("[createKudosServices] Token verification:", {
-      tokenProvided: !!serverSideToken,
-      tokenStored: !!storedToken,
-      match: serverSideToken === storedToken,
-    });
   }
 
-  // Create HTTP service
   const httpService = new HttpService(configService, storageService);
 
-  // Repository instance
   const kudosRepository: IKudosRepository = new KudosRepositoryImpl(
     httpService,
     configService
   );
 
-  // Use case instances
   const getAllKudosUseCase = new GetAllKudosUseCase(kudosRepository);
 
   return {
@@ -62,5 +46,4 @@ export function createKudosServices(
   };
 }
 
-// Default instance for client-side usage
 export const kudosServices = createKudosServices();

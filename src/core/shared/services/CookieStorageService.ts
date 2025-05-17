@@ -25,39 +25,14 @@ export class CookieStorageService implements IStorageService {
     const cookies = parseCookies(this.ctx);
     const value = cookies[key] || null;
 
-    if (process.env.NODE_ENV === "development") {
-      const isServer = typeof window === "undefined";
-      console.log(
-        `[CookieStorage] ${isServer ? "Server" : "Client"} getItem(${key}): ${
-          value ? "has value" : "null"
-        }`
-      );
-    }
-
     return value;
   }
 
   setItem(key: string, value: string): void {
     setCookie(this.ctx, key, value, this.DEFAULT_OPTIONS);
-
-    if (process.env.NODE_ENV === "development") {
-      const isServer = typeof window === "undefined";
-      console.log(
-        `[CookieStorage] ${
-          isServer ? "Server" : "Client"
-        } setItem(${key}): value set`
-      );
-    }
   }
 
   removeItem(key: string): void {
     destroyCookie(this.ctx, key);
-
-    if (process.env.NODE_ENV === "development") {
-      const isServer = typeof window === "undefined";
-      console.log(
-        `[CookieStorage] ${isServer ? "Server" : "Client"} removeItem(${key})`
-      );
-    }
   }
 }

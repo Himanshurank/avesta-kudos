@@ -17,17 +17,9 @@ export class HttpService implements IHttpService {
   private getAuthHeader(): Record<string, string> {
     const token = this.storageService.getItem(this.TOKEN_KEY);
     if (token) {
-      const authHeader = { Authorization: `Bearer ${token}` };
-      // Log auth header for debugging (but hide the actual token)
-      if (process.env.NODE_ENV === "development") {
-        console.log("Adding auth header to request", { hasToken: !!token });
-      }
-      return authHeader;
+      return { Authorization: `Bearer ${token}` };
     }
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("No auth token found in storage for request");
-    }
     return {};
   }
 

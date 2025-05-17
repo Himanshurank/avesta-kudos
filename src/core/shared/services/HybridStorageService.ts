@@ -6,20 +6,11 @@ export class HybridStorageService implements IStorageService {
   private cookieStorage: CookieStorageService;
   private localStorage: StorageService;
 
-  // Keys that should be stored in cookies instead of localStorage
   private readonly COOKIE_KEYS = ["auth_token"];
 
   constructor(ctx: Record<string, unknown> | null = null) {
     this.cookieStorage = new CookieStorageService(ctx);
     this.localStorage = new StorageService();
-
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `[HybridStorage] Created ${
-          typeof window === "undefined" ? "server-side" : "client-side"
-        } with${ctx ? "" : "out"} context`
-      );
-    }
   }
 
   getItem(key: string): string | null {
