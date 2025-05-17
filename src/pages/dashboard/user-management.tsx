@@ -133,7 +133,7 @@ const UserManagementPage = () => {
   };
 
   // Helper function to convert role name to ID
-  const getRoleId = (roleName: string): number => {
+  const getRoleId = (roleName: string | number): number => {
     switch (roleName) {
       case "Admin":
         return 1;
@@ -198,10 +198,16 @@ const UserManagementPage = () => {
   ) => {
     try {
       // Only send password if it's provided (not empty)
-      const dataToUpdate: Partial<UserFormData> = {
+      const dataToUpdate: Partial<{
+        name: string;
+        email: string;
+        role: number;
+        status: string;
+        password?: string;
+      }> = {
         name: userData.name,
         email: userData.email,
-        role: userData.role,
+        role: getRoleId(userData.role as string),
         status: userData.status,
       };
 
@@ -242,7 +248,7 @@ const UserManagementPage = () => {
         email: userData.email,
         password: userData.password,
         name: userData.name,
-        roleIds: getRoleId(userData.role),
+        roleIds: getRoleId(userData.role as string),
       });
 
       // Refresh user list

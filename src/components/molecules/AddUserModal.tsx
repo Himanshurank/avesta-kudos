@@ -16,7 +16,7 @@ export interface UserFormData {
   name: string;
   email: string;
   password: string;
-  role: string;
+  role: number | string;
   status: string;
 }
 
