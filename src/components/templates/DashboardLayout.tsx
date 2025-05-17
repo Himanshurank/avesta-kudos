@@ -105,6 +105,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       return [
         ...commonTabs,
         { id: "kudos", label: "Kudos Wall" },
+        { id: "analytics", label: "Analytics" },
         { id: "user-management", label: "User Management" },
         { id: "approval-queue", label: "Approval Queue" },
         { id: "system-settings", label: "System Settings" },
@@ -126,7 +127,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     // Regular user tabs
     return [
       ...commonTabs,
-      { id: "kudos", label: "Kudos Wall" },
       { id: "my-kudos", label: "My Kudos" },
       { id: "team", label: "My Team" },
     ];
