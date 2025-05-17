@@ -1,0 +1,112 @@
+---
+description: Describes the standard for implementing the repository and service pattern throughout the TimeWarden project. Specifies where to define interfaces, concrete implementations, and how to separate data access from business logic. Provides detailed examples of file organization, naming conventions, and code structure for all layers. Includes implementation guidelines and best practices for creating maintainable, testable services and repositories. Use this rule to ensure consistent architectural patterns across all domain entities in the codebase.
+globs:
+alwaysApply: false
+---
+# Repository and Service Pattern
+
+**Description:**
+Defines the standard architecture for implementing the repository and service patterns throughout the TimeWarden project. This pattern separates data access logic (repositories) from business logic (services) to create a maintainable, testable, and loosely coupled system. Use this rule to guide the creation, location, and implementation of repositories and services for any domain entity in the codebase.
+
+## Architecture Overview
+
+```
+Domain Layer (Entities, Interfaces) ← Infrastructure Layer (Repositories)
+        ↑                                      ↑
+        |                                      |
+Application Layer (Services) → State Management (Framework Agnostic)
+        ↑
+        |
+Presentation Layer (UI Components)
+```
+
+## Domain Layer
+
+- Define entities and DTOs in `src/domain/entities/[EntityName].ts`
+- Define repository interfaces in `src/domain/interfaces/I[EntityName]Repository.ts`
+- Define service interfaces in `src/domain/interfaces/I[EntityName]Service.ts`
+
+Example:
+```typescript
+// src/domain/interfaces/IEntityRepository.ts
+export interface IEntityRepository<T> {
+  getAll(): Promise<T[]>;
+  getById(id: string): Promise<T | null>;
+  create(entity: Omit<T, 'id'>): Promise<T>;
+  update(id: string, entity: Partial<T>): Promise<T>;
+  delete(id: string): Promise<void>;
+}
+```
+
+## Infrastructure Layer
+
+- Implement repositories in `src/infrastructure/repositories/[EntityName]Repository.ts`
+- Database-specific queries in `src/infrastructure/supabase/database/[entityName]Queries.ts`
+- Use singleton pattern for repository instances
+- Repositories should only handle data access, no business logic
+
+Example:
+```typescript
+// src/infrastructure/repositories/EntityRepository.ts
+export class EntityRepository<T> implements IEntityRepository<T> {
+  private static instance: EntityRepository<T>;
+
+  private constructor(private tableName: string) {}
+
+  static getInstance<T>(tableName: string): EntityRepository<T> {
+    if (!EntityRepository.instance) {
+      EntityRepository.instance = new EntityRepository<T>(tableName);
+    }
+    return EntityRepository.instance as EntityRepository<T>;
+  }
+}
+```
+
+## Application Layer
+
+- Implement services in `src/application/services/[entityName]/[EntityName]Service.ts`
+- Services should use repository interfaces via dependency injection
+- Services contain all business logic and validation
+- Services transform data for presentation
+
+Example:
+```typescript
+// src/application/services/EntityService.ts
+export class EntityService<T> implements IEntityService<T> {
+  constructor(private repository: IEntityRepository<T>) {}
+
+  // Business logic and operations
+}
+```
+
+## State Management (Framework Agnostic)
+
+- Your application can integrate services with any state management solution
+- Services should remain independent of the state management choice
+- State containers should consume services through dependency injection
+- Handle loading and error states in your state management layer
+
+## Implementation Guidelines
+
+1. **Repository Responsibilities**:
+   - Data access only (CRUD operations)
+   - No business logic
+   - Handle database errors
+   - Return domain entities
+
+2. **Service Responsibilities**:
+   - Implement business logic
+   - Validate input data
+   - Transform data for presentation
+   - Coordinate complex operations
+
+3. **Best Practices**:
+   - Use interfaces for loose coupling
+   - Implement singleton pattern for repositories
+   - Use dependency injection
+   - Handle errors appropriately at each layer
+   - Keep services focused on one domain entity or concept
+   - Use DTOs for data transfer between layers
+   - Implement proper error handling in each layer
+
+

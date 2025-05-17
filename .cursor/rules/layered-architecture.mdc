@@ -1,0 +1,263 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Layered Architecture
+
+**Description:**
+Defines the structure, responsibilities, and interactions between the four main architectural layers in the TimeWarden application: Presentation, Application, Domain, and Infrastructure. This pattern provides clear separation of concerns and helps maintain a clean, testable codebase.
+
+## Layer Structure
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                       │
+│    (Atoms, Molecules, Organisms, Templates, Pages)          │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Application Layer                        │
+│          (Services, DTOs, Application Logic)                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Domain Layer                           │
+│      (Entities, Value Objects, Domain Services)             │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Infrastructure Layer                       │
+│ (Repositories, External API Clients, Data Access)           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Layer Definitions and Responsibilities
+
+### 1. Presentation Layer
+
+**Location:** `src/presentation/*`
+
+**Responsibilities:**
+- Implement UI components using Atomic Design principles
+- Handle user interactions and input validation
+- Display data to users in appropriate formats
+- Use dependency injection to access application services
+- Never directly access domain or infrastructure layers
+
+**Components:**
+- Atoms: `src/presentation/atoms/`
+- Molecules: `src/presentation/molecules/`
+- Organisms: `src/presentation/organisms/`
+- Templates: `src/presentation/templates/`
+- Pages: `src/presentation/pages/`
+
+**Example:**
+```typescript
+// src/presentation/pages/TodoPage.tsx
+const TodoPage = ({ todoService }: { todoService: ITodoService }) => {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const loadTodos = async () => {
+      setLoading(true);
+      try {
+        const result = await todoService.getTodos();
+        setTodos(result);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to load todos'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTodos();
+  }, [todoService]);
+
+  const handleAddTodo = async (todoData: CreateTodoDto) => {
+    try {
+      const newTodo = await todoService.addTodo(todoData);
+      setTodos(prev => [...prev, newTodo]);
+      return newTodo;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to add todo'));
+      throw err;
+    }
+  };
+
+  // UI rendering logic
+  return (
+    <TodoTemplate>
+      <TodoList todos={todos} loading={loading} error={error} />
+      <TodoForm onSubmit={handleAddTodo} />
+    </TodoTemplate>
+  );
+};
+```
+
+### 2. Application Layer
+
+**Location:** `src/application/*`
+
+**Responsibilities:**
+- Implement business logic and use cases
+- Coordinate between domain and infrastructure layers
+- Transform data using DTOs and mappers
+- Define interfaces for infrastructure implementations
+- Handle application-specific validation and business rules
+- No direct dependency on presentation or infrastructure implementation details
+
+**Components:**
+- Services: `src/application/services/`
+- DTOs: `src/application/dto/`
+- Interfaces: `src/application/interfaces/`
+- Mappers: `src/application/mappers/`
+
+**Example:**
+```typescript
+// src/application/services/todo/TodoService.ts
+export class TodoService implements ITodoService {
+  constructor(private todoRepository: ITodoRepository) {}
+
+  async getTodos(): Promise<Todo[]> {
+    return this.todoRepository.findAll();
+  }
+
+  async addTodo(todo: CreateTodoDto): Promise<Todo> {
+    // Business logic validation
+    if (!todo.title) {
+      throw new ValidationError('Title is required');
+    }
+
+    const newTodo = {
+      ...todo,
+      completed: false,
+      createdAt: new Date(),
+    };
+
+    return this.todoRepository.create(newTodo);
+  }
+}
+```
+
+### 3. Domain Layer
+
+**Location:** `src/domain/*`
+
+**Responsibilities:**
+- Define core business entities and value objects
+- Represent business concepts and relationships
+- Implement domain-specific business rules
+- No dependencies on other layers
+- Use plain TypeScript/JavaScript
+- Highly testable with unit tests
+
+**Components:**
+- Entities: `src/domain/entities/`
+- Value Objects: `src/domain/value-objects/`
+- Interfaces: `src/domain/interfaces/`
+- Errors: `src/domain/errors/`
+
+**Example:**
+```typescript
+// src/domain/entities/Todo.ts
+export class Todo {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public completed: boolean,
+    public createdAt: Date,
+    public dueDate?: Date
+  ) {}
+
+  complete(): void {
+    this.completed = true;
+  }
+
+  isOverdue(): boolean {
+    if (!this.dueDate) return false;
+    return !this.completed && this.dueDate < new Date();
+  }
+}
+```
+
+### 4. Infrastructure Layer
+
+**Location:** `src/infrastructure/*`
+
+**Responsibilities:**
+- Implement data access through repositories
+- Handle external system communication
+- Implement interfaces defined by application layer
+- Adapt external systems to application needs
+- Manage database connections and queries
+- Handle external API integration
+
+**Components:**
+- Repositories: `src/infrastructure/repositories/`
+- API Clients: `src/infrastructure/api/`
+- Storage: `src/infrastructure/storage/`
+- Database: `src/infrastructure/database/`
+
+**Example:**
+```typescript
+// src/infrastructure/repositories/todo/TodoRepository.ts
+export class TodoRepository implements ITodoRepository {
+  constructor(private dataSource: DataSource) {}
+
+  async findAll(): Promise<Todo[]> {
+    return this.dataSource.todos.findMany();
+  }
+
+  async create(todo: CreateTodoDto): Promise<Todo> {
+    return this.dataSource.todos.create({
+      data: todo,
+    });
+  }
+}
+```
+
+## Data Flow
+
+1. User interacts with UI component (Presentation Layer)
+2. UI component calls application service directly (through props/dependency injection)
+3. Application service processes request (validation, transformation)
+4. Service uses domain entities and calls repository interface
+5. Repository implementation (Infrastructure Layer) performs data access
+6. Data flows back up through layers with appropriate transformations
+
+## Best Practices
+
+1. **Clear Boundaries:**
+   - Each layer should only depend on layers below it
+   - Higher layers should only access lower layers through interfaces
+   - Avoid circular dependencies between layers
+
+2. **Dependency Injection:**
+   - Use constructor injection to provide dependencies
+   - Define interfaces for all important components
+   - Instantiate dependencies in composition root or IoC container
+
+3. **Error Handling:**
+   - Domain layer: Business rule validation errors
+   - Application layer: Use case coordination errors
+   - Infrastructure layer: External system errors
+   - Transform technical errors into domain-specific errors when moving up layers
+
+4. **File Naming:**
+   - Consistent naming within each layer
+   - Entity-first naming (e.g., `TodoService.ts`, `TodoRepository.ts`)
+   - Interface names prefixed with "I" (e.g., `ITodoService.ts`)
+
+5. **Testing Approach:**
+   - Domain layer: Unit tests for business rules
+   - Application layer: Unit tests with mocked repositories
+   - Infrastructure layer: Integration tests
+   - Presentation layer: Component tests

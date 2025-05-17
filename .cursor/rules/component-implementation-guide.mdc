@@ -1,0 +1,84 @@
+---
+description: A comprehensive React component implementation guide detailing the standard structure and best practices for our project. Covers the 9-step implementation pattern from imports to exports, TypeScript interfaces, state management, render methods, event handling, and accessibility. Includes practical examples of proper component structure, props handling, and Tailwind CSS styling conventions. Reference this rule when creating or modifying components to maintain consistency across the codebase.
+globs:
+alwaysApply: false
+---
+# React Component Implementation Guide
+
+This rule defines the standard pattern for implementing React components in our project.
+
+## Component Structure
+
+Components should follow this structured implementation pattern:
+
+1. Import dependencies
+2. Define interfaces/types with TypeScript
+3. Initialize component with destructured props
+4. Manage state with useState/useEffect hooks
+5. Create helper functions for component logic
+6. Implement separate render methods for component sections
+7. Define event handlers
+8. Return JSX structure
+9. Export component
+
+## Best Practices
+
+- Use Tailwind CSS for styling and group related classes
+- Keep components focused on single responsibilities
+- Use TypeScript interfaces for props and state
+- Provide default values for optional props
+- Break complex components into smaller render methods
+- Use proper event typing (React.MouseEvent<HTMLElement>)
+- Include data-testid attributes for testing
+- Pass className prop to allow customization
+- Use semantic HTML and ARIA attributes for accessibility
+- follow [atomic-architecture-complete.mdc](mdc:.cursor/rules/atomic-architecture-complete.mdc)
+
+## Example Component
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import Typography from '@/sharedComponents/typography/typography';
+
+interface IProps {
+  title: string;
+  description?: string;
+  onClick?: (id: string) => void;
+  className?: string;
+  testId?: string;
+}
+
+const ComponentName = (props: IProps) => {
+  const { title, description, onClick, className = '', testId } = props;
+  const [isActive, setIsActive] = useState<boolean>(false);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    onClick && onClick(id);
+  };
+
+  const renderContent = () => {
+    return (
+      <div className="flex items-center">
+        <Typography variant="base" component="p">
+          {title}
+        </Typography>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className={`flex flex-col bg-at-white rounded-xl ${className}`}
+      data-testid={testId || 'component-name'}
+      onClick={handleClick}
+    >
+      {renderContent()}
+    </div>
+  );
+};
+
+export default ComponentName;
+```
+
+This pattern ensures consistent, maintainable, and testable components across the project.
