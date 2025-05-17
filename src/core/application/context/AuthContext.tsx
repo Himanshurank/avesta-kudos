@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import { User } from "../../domain/entities/User";
-import { container } from "../../infrastructure/di/container";
+import { container } from "@/core/shared/di/container";
 
 interface AuthContextType {
   user: User | null;

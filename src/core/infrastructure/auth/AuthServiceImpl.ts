@@ -1,10 +1,10 @@
 import { IAuthService } from "../../domain/interfaces/IAuthService";
 import { User } from "../../domain/entities/User";
-import { AuthRepository } from "./AuthRepository";
+import { AuthRepository } from "../repositories/AuthRepository";
 import { AuthResponse } from "../../domain/valueObjects/AuthResponse";
 import { IStorageService } from "../../shared/interface/IStorageService";
 
-export class AuthService implements IAuthService {
+export class AuthServiceImpl implements IAuthService {
   private readonly TOKEN_KEY = "auth_token";
   private readonly USER_KEY = "user_data";
 

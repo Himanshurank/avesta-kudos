@@ -3,6 +3,9 @@ import { useRouter } from "next/router";
 import { useAuth } from "@/core/application/context/AuthContext";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
+import AddUserModal, {
+  UserFormData,
+} from "@/components/molecules/AddUserModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UserGroupIcon,
@@ -16,15 +19,25 @@ import {
   AdjustmentsHorizontalIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
+import { container } from "@/core/shared/di/container";
 
 // Define interfaces
 interface User {
   id: number;
   name: string;
   email: string;
+  password?: string; // Optional since existing users might not have it
   role: string;
   status: string;
   createdAt: string;
+}
+
+// Interface for our internal pagination state
+interface Pagination {
+  totalItems: number;
+  itemsPerPage: number;
+  currentPage: number;
+  totalPages: number;
 }
 
 const UserManagementPage = () => {
@@ -36,40 +49,109 @@ const UserManagementPage = () => {
   const [selectedRole, setSelectedRole] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: 1,
-      name: "John Smith",
-      email: "john@example.com",
-      role: "Admin",
-      status: "Active",
-      createdAt: "2023-01-15",
-    },
-    {
-      id: 2,
-      name: "Sarah Jones",
-      email: "sarah@example.com",
-      role: "User",
-      status: "Active",
-      createdAt: "2023-02-20",
-    },
-    {
-      id: 3,
-      name: "Mike Wilson",
-      email: "mike@example.com",
-      role: "User",
-      status: "Active",
-      createdAt: "2023-03-10",
-    },
-    {
-      id: 4,
-      name: "Emma Davis",
-      email: "emma@example.com",
-      role: "Admin",
-      status: "Active",
-      createdAt: "2023-04-05",
-    },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({
+    totalItems: 0,
+    itemsPerPage: 10,
+    currentPage: 1,
+    totalPages: 1,
+  });
+
+  // Modal states
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Fetch users from the API
+  const fetchUsers = async (page = 1, limit = 10) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await container.getAllUsersUseCase.execute({
+        page,
+        limit,
+        roleId: selectedRole !== "All" ? getRoleId(selectedRole) : undefined,
+        approvalStatus: selectedStatus !== "All" ? selectedStatus : undefined,
+      });
+
+      // Check if result and result.users exist before mapping
+      if (!result || !result.users || !Array.isArray(result.users)) {
+        console.error("API response format is unexpected:", result);
+        setError("Received unexpected data format from the server");
+        setUsers([]);
+        setPagination({
+          totalItems: 0,
+          itemsPerPage: 10,
+          currentPage: 1,
+          totalPages: 1,
+        });
+        return;
+      }
+
+      // Map the API response to our User interface
+      const mappedUsers = result.users.map((apiUser) => {
+        return {
+          id: apiUser.id || 0,
+          name: apiUser.name || "Unknown",
+          email: apiUser.email || "No email",
+          role: Array.isArray(apiUser.roles)
+            ? apiUser.roles.map((r) => r?.name || "Unknown").join(", ")
+            : "No role",
+          status: apiUser.approvalStatus || "Unknown",
+          createdAt: apiUser.createdAt
+            ? new Date(apiUser.createdAt).toISOString().split("T")[0]
+            : "Unknown date",
+        };
+      });
+
+      setUsers(mappedUsers);
+
+      // Set pagination using the data from API, with fallbacks
+      setPagination({
+        totalItems: result.pagination?.total || 0,
+        itemsPerPage: result.pagination?.limit || 10,
+        currentPage: result.pagination?.page || 1,
+        totalPages: result.pagination?.pages || 1,
+      });
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError("Failed to load users. Please try again later.");
+      toast.error("Failed to load users");
+      // Initialize with empty data on error
+      setUsers([]);
+      setPagination({
+        totalItems: 0,
+        itemsPerPage: 10,
+        currentPage: 1,
+        totalPages: 1,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper function to convert role name to ID
+  const getRoleId = (roleName: string): number => {
+    switch (roleName) {
+      case "Admin":
+        return 1;
+      case "User":
+        return 2;
+      case "Super Admin":
+        return 3;
+      default:
+        return 0;
+    }
+  };
+
+  // Load users on component mount and when filters change
+  useEffect(() => {
+    if (user) {
+      fetchUsers(pagination.currentPage, pagination.itemsPerPage);
+    }
+  }, [user, selectedRole, selectedStatus, pagination.currentPage]);
 
   // Define helper functions
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,19 +160,71 @@ const UserManagementPage = () => {
 
   const handleRoleFilter = (role: string) => {
     setSelectedRole(role);
+    setPagination((prev) => ({ ...prev, currentPage: 1 })); // Reset to first page when changing filters
   };
 
   const handleStatusFilter = (status: string) => {
     setSelectedStatus(status);
+    setPagination((prev) => ({ ...prev, currentPage: 1 })); // Reset to first page when changing filters
   };
 
-  const handleDeleteUser = (userId: number) => {
-    toast.success(`User deleted successfully`);
-    setUsers(users.filter((u) => u.id !== userId));
+  const handleDeleteUser = async (userId: number) => {
+    try {
+      await container.deleteUserUseCase.execute(userId);
+      toast.success("User deleted successfully");
+      // Refresh user list
+      fetchUsers(pagination.currentPage, pagination.itemsPerPage);
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      toast.error("Failed to delete user");
+    }
   };
 
   const handleEditUser = (userId: number) => {
-    toast.success(`Edit user modal would open for user ID: ${userId}`);
+    // Find the user by ID
+    const userToEdit = users.find((u) => u.id === userId);
+    if (userToEdit) {
+      // Set the selected user and open the edit modal
+      setSelectedUser(userToEdit);
+      setIsEditUserModalOpen(true);
+    } else {
+      toast.error("User not found");
+    }
+  };
+
+  const handleEditUserSubmit = async (
+    userId: number,
+    userData: UserFormData
+  ) => {
+    try {
+      // Only send password if it's provided (not empty)
+      const dataToUpdate: Partial<UserFormData> = {
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        status: userData.status,
+      };
+
+      if (userData.password.trim()) {
+        dataToUpdate.password = userData.password;
+      }
+
+      // Call the update API
+      await container.updateUserUseCase.execute(userId, dataToUpdate);
+
+      // Refresh the users list
+      fetchUsers(pagination.currentPage, pagination.itemsPerPage);
+
+      // Close the modal
+      setIsEditUserModalOpen(false);
+      setSelectedUser(null);
+
+      // Show success message
+      toast.success("User updated successfully");
+    } catch (err) {
+      console.error("Error updating user:", err);
+      toast.error("Failed to update user");
+    }
   };
 
   const handleManageRoles = (userId: number) => {
@@ -98,7 +232,31 @@ const UserManagementPage = () => {
   };
 
   const handleAddUser = () => {
-    toast.success("Add user modal would open");
+    setIsAddUserModalOpen(true);
+  };
+
+  const handleAddUserSubmit = async (userData: UserFormData) => {
+    try {
+      // Create the user through the API
+      await container.createUserUseCase.execute({
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+        roleIds: getRoleId(userData.role),
+      });
+
+      // Refresh user list
+      fetchUsers(pagination.currentPage, pagination.itemsPerPage);
+
+      // Close the modal
+      setIsAddUserModalOpen(false);
+
+      // Show success message
+      toast.success("User added successfully");
+    } catch (err) {
+      console.error("Error adding user:", err);
+      toast.error("Failed to add user");
+    }
   };
 
   const handleExportUsers = () => {
@@ -109,16 +267,17 @@ const UserManagementPage = () => {
     setShowFilters(!showFilters);
   };
 
-  // Create filtered users list
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, currentPage: page }));
+  };
+
+  // Create filtered users list (client-side filtering for search)
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === "All" || user.role === selectedRole;
-    const matchesStatus =
-      selectedStatus === "All" || user.status === selectedStatus;
 
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch;
   });
 
   // Authorization check
@@ -256,19 +415,21 @@ const UserManagementPage = () => {
                           Status
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {["All", "Active", "Inactive"].map((status) => (
-                            <button
-                              key={status}
-                              onClick={() => handleStatusFilter(status)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                                selectedStatus === status
-                                  ? "bg-indigo-600 text-white"
-                                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                              }`}
-                            >
-                              {status}
-                            </button>
-                          ))}
+                          {["All", "Approved", "Pending", "Rejected"].map(
+                            (status) => (
+                              <button
+                                key={status}
+                                onClick={() => handleStatusFilter(status)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                                  selectedStatus === status
+                                    ? "bg-indigo-600 text-white"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                }`}
+                              >
+                                {status}
+                              </button>
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
@@ -279,161 +440,262 @@ const UserManagementPage = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-indigo-50 to-white">
-                <tr>
-                  <th className="py-3.5 px-4 text-left text-black font-semibold">
-                    Name
-                  </th>
-                  <th className="py-3.5 px-4 text-left text-black font-semibold">
-                    Email
-                  </th>
-                  <th className="py-3.5 px-4 text-left text-black font-semibold">
-                    Role
-                  </th>
-                  <th className="py-3.5 px-4 text-left text-black font-semibold">
-                    Status
-                  </th>
-                  <th className="py-3.5 px-4 text-left text-black font-semibold">
-                    Created
-                  </th>
-                  <th className="py-3.5 px-4 text-left text-black font-semibold">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <AnimatePresence>
-                  {filteredUsers.map((user) => (
-                    <motion.tr
-                      key={user.id}
-                      className="hover:bg-indigo-50/30 transition-colors"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <td className="py-4 px-4 text-black">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                            <span className="text-indigo-700 font-semibold">
-                              {user.name.charAt(0)}
-                            </span>
-                          </div>
-                          {user.name}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-black">{user.email}</td>
-                      <td className="py-4 px-4">
-                        <span
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center ${
-                            user.role === "Admin"
-                              ? "bg-indigo-100 text-indigo-800"
-                              : user.role === "Super Admin"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {user.role === "Admin" && (
-                            <UserCircleIcon className="w-3.5 h-3.5 mr-1" />
-                          )}
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            user.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-slate-600">
-                        {user.createdAt}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex space-x-3">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleEditUser(user.id)}
-                            className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-lg hover:bg-indigo-50"
-                            title="Edit User"
-                          >
-                            <PencilSquareIcon className="w-5 h-5" />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleManageRoles(user.id)}
-                            className="text-blue-600 hover:text-blue-900 p-1.5 rounded-lg hover:bg-blue-50"
-                            title="Manage Roles"
-                          >
-                            <UserCircleIcon className="w-5 h-5" />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-900 p-1.5 rounded-lg hover:bg-red-50"
-                            title="Delete User"
-                          >
-                            <TrashIcon className="w-5 h-5" />
-                          </motion.button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-
-                {filteredUsers.length === 0 && (
+            {isLoading ? (
+              <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center p-12">
+                <div className="text-center">
+                  <div className="text-red-500 mb-2">{error}</div>
+                  <button
+                    onClick={() =>
+                      fetchUsers(
+                        pagination.currentPage,
+                        pagination.itemsPerPage
+                      )
+                    }
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-indigo-50 to-white">
                   <tr>
-                    <td colSpan={6} className="py-8 text-center">
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                          <UserGroupIcon className="w-8 h-8 text-slate-400" />
-                        </div>
-                        <p className="text-black font-medium">No users found</p>
-                        <p className="text-slate-500 text-sm mt-1">
-                          Try adjusting your search or filters
-                        </p>
-                      </div>
-                    </td>
+                    <th className="py-3.5 px-4 text-left text-black font-semibold">
+                      Name
+                    </th>
+                    <th className="py-3.5 px-4 text-left text-black font-semibold">
+                      Email
+                    </th>
+                    <th className="py-3.5 px-4 text-left text-black font-semibold">
+                      Role
+                    </th>
+                    <th className="py-3.5 px-4 text-left text-black font-semibold">
+                      Status
+                    </th>
+                    <th className="py-3.5 px-4 text-left text-black font-semibold">
+                      Created
+                    </th>
+                    <th className="py-3.5 px-4 text-left text-black font-semibold">
+                      Actions
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  <AnimatePresence>
+                    {filteredUsers.map((user) => (
+                      <motion.tr
+                        key={user.id}
+                        className="hover:bg-indigo-50/30 transition-colors"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <td className="py-4 px-4 text-black">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                              <span className="text-indigo-700 font-semibold">
+                                {user.name.charAt(0)}
+                              </span>
+                            </div>
+                            {user.name}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-black">{user.email}</td>
+                        <td className="py-4 px-4">
+                          <span
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center ${
+                              user.role.includes("Admin")
+                                ? "bg-indigo-100 text-indigo-800"
+                                : user.role.includes("Super")
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {user.role.includes("Admin") && (
+                              <UserCircleIcon className="w-3.5 h-3.5 mr-1" />
+                            )}
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                              user.status === "Approved"
+                                ? "bg-green-100 text-green-800"
+                                : user.status === "Pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {user.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-slate-600">
+                          {user.createdAt}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex space-x-3">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleEditUser(user.id)}
+                              className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-lg hover:bg-indigo-50"
+                              title="Edit User"
+                            >
+                              <PencilSquareIcon className="w-5 h-5" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleManageRoles(user.id)}
+                              className="text-blue-600 hover:text-blue-900 p-1.5 rounded-lg hover:bg-blue-50"
+                              title="Manage Roles"
+                            >
+                              <UserCircleIcon className="w-5 h-5" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-red-600 hover:text-red-900 p-1.5 rounded-lg hover:bg-red-50"
+                              title="Delete User"
+                            >
+                              <TrashIcon className="w-5 h-5" />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+
+                  {filteredUsers.length === 0 && !isLoading && (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                            <UserGroupIcon className="w-8 h-8 text-slate-400" />
+                          </div>
+                          <p className="text-black font-medium">
+                            No users found
+                          </p>
+                          <p className="text-slate-500 text-sm mt-1">
+                            Try adjusting your search or filters
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
 
-          <div className="p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="text-slate-600 font-medium">
-              Showing {filteredUsers.length} of {users.length} users
+          {!isLoading && !error && (
+            <div className="p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="text-slate-600 font-medium">
+                Showing {filteredUsers.length} of {pagination.totalItems} users
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  disabled={pagination.currentPage <= 1}
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  className={`flex items-center px-3 py-2 ${
+                    pagination.currentPage <= 1
+                      ? "bg-white border border-slate-200 text-slate-400 cursor-not-allowed"
+                      : "bg-white border border-slate-200 text-black rounded-lg cursor-pointer hover:bg-slate-50"
+                  }`}
+                >
+                  <ChevronLeftIcon className="w-4 h-4 mr-1" />
+                  Previous
+                </button>
+
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (page) =>
+                      page === 1 ||
+                      page === pagination.totalPages ||
+                      Math.abs(page - pagination.currentPage) <= 1
+                  )
+                  .map((page, index, array) => {
+                    // If there's a gap, show ellipsis
+                    if (index > 0 && page - array[index - 1] > 1) {
+                      return (
+                        <span key={`ellipsis-${page}`} className="px-3 py-2">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-lg ${
+                          pagination.currentPage === page
+                            ? "bg-indigo-600 text-white"
+                            : "bg-white border border-slate-200 text-black hover:bg-slate-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+
+                <button
+                  disabled={pagination.currentPage >= pagination.totalPages}
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  className={`flex items-center px-3 py-2 ${
+                    pagination.currentPage >= pagination.totalPages
+                      ? "bg-white border border-slate-200 text-slate-400 cursor-not-allowed"
+                      : "bg-white border border-slate-200 text-black rounded-lg cursor-pointer hover:bg-slate-50"
+                  }`}
+                >
+                  Next
+                  <ChevronRightIcon className="w-4 h-4 ml-1" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                disabled
-                className="flex items-center px-3 py-2 bg-white border border-slate-200 text-slate-400 rounded-lg cursor-not-allowed"
-              >
-                <ChevronLeftIcon className="w-4 h-4 mr-1" />
-                Previous
-              </button>
-              <button className="px-3 py-2 bg-indigo-600 text-white rounded-lg font-medium">
-                1
-              </button>
-              <button
-                disabled
-                className="flex items-center px-3 py-2 bg-white border border-slate-200 text-slate-400 rounded-lg cursor-not-allowed"
-              >
-                Next
-                <ChevronRightIcon className="w-4 h-4 ml-1" />
-              </button>
-            </div>
-          </div>
+          )}
         </motion.div>
       </div>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onAddUser={handleAddUserSubmit}
+        mode="add"
+      />
+
+      {/* Edit User Modal */}
+      <AddUserModal
+        isOpen={isEditUserModalOpen}
+        onClose={() => {
+          setIsEditUserModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onAddUser={handleAddUserSubmit}
+        onEditUser={handleEditUserSubmit}
+        initialData={
+          selectedUser
+            ? {
+                id: selectedUser.id,
+                name: selectedUser.name,
+                email: selectedUser.email,
+                password: "", // Empty password in edit mode
+                role: selectedUser.role,
+                status: selectedUser.status,
+              }
+            : undefined
+        }
+        mode="edit"
+      />
     </DashboardLayout>
   );
 };

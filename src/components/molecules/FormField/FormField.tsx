@@ -1,6 +1,6 @@
-import React, { forwardRef } from 'react';
-import Input from '@/components/atoms/Input';
-import Typography from '@/components/atoms/Typography';
+import React, { forwardRef } from "react";
+import Input from "@/components/atoms/Input";
+import Typography from "@/components/atoms/Typography";
 
 interface FormFieldProps {
   /**
@@ -18,7 +18,7 @@ interface FormFieldProps {
   /**
    * Field type
    */
-  type?: 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'search';
+  type?: "text" | "password" | "email" | "number" | "tel" | "url" | "search";
   /**
    * Field placeholder
    */
@@ -74,7 +74,7 @@ interface FormFieldProps {
   /**
    * Icon position
    */
-  iconPosition?: 'left' | 'right';
+  iconPosition?: "left" | "right";
   /**
    * Test ID for testing
    */
@@ -86,7 +86,7 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
     label,
     name,
     id,
-    type = 'text',
+    type = "text",
     placeholder,
     value,
     defaultValue,
@@ -96,12 +96,12 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
     required = false,
     error,
     helperText,
-    className = '',
-    inputClassName = '',
-    labelClassName = '',
+    className = "",
+    inputClassName = "",
+    labelClassName = "",
     icon,
     iconPosition,
-    testId = 'form-field',
+    testId = "form-field",
   } = props;
 
   const fieldId = id || name;
@@ -150,6 +150,6 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   );
 });
 
-FormField.displayName = 'FormField';
+FormField.displayName = "FormField";
 
-export default FormField; 
+export default FormField;
