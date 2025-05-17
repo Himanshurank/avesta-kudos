@@ -52,19 +52,21 @@ export class KudosRepositoryImpl
     const path = this.getApiPath("kudos").getAll;
 
     const response = await this.httpService.get<
-      ApiKudosResponse<KudosApiData[]>
+      ApiKudosResponse<{ kudos: KudosApiData[] }>
     >({
       path,
       queryParams: params as Record<string, string | number | boolean>,
     });
 
+    const kudosData = response.data.kudos || [];
+
     return {
-      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      data: kudosData.map((kudos) => this.mapKudosResponse(kudos)),
       pagination: response.pagination || {
         page: params.page || 1,
         limit: params.limit || 10,
-        total: response.data.length,
-        pages: Math.ceil(response.data.length / (params.limit || 10)),
+        total: kudosData.length,
+        pages: Math.ceil(kudosData.length / (params.limit || 10)),
       },
     };
   }
@@ -74,12 +76,12 @@ export class KudosRepositoryImpl
       const path = this.getApiPath("kudos").getById(id);
 
       const response = await this.httpService.get<
-        ApiKudosResponse<KudosApiData>
+        ApiKudosResponse<{ kudos: KudosApiData }>
       >({
         path,
       });
 
-      return this.mapKudosResponse(response.data);
+      return this.mapKudosResponse(response.data.kudos);
     } catch (error) {
       if ((error as Error).message.includes("NOT_FOUND")) {
         return null;
@@ -95,19 +97,21 @@ export class KudosRepositoryImpl
     const path = `kudos/team/${teamId}`;
 
     const response = await this.httpService.get<
-      ApiKudosResponse<KudosApiData[]>
+      ApiKudosResponse<{ kudos: KudosApiData[] }>
     >({
       path,
       queryParams: params as Record<string, string | number | boolean>,
     });
 
+    const kudosData = response.data.kudos || [];
+
     return {
-      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      data: kudosData.map((kudos) => this.mapKudosResponse(kudos)),
       pagination: response.pagination || {
         page: params.page || 1,
         limit: params.limit || 10,
-        total: response.data.length,
-        pages: Math.ceil(response.data.length / (params.limit || 10)),
+        total: kudosData.length,
+        pages: Math.ceil(kudosData.length / (params.limit || 10)),
       },
     };
   }
@@ -119,19 +123,21 @@ export class KudosRepositoryImpl
     const path = `kudos/category/${categoryId}`;
 
     const response = await this.httpService.get<
-      ApiKudosResponse<KudosApiData[]>
+      ApiKudosResponse<{ kudos: KudosApiData[] }>
     >({
       path,
       queryParams: params as Record<string, string | number | boolean>,
     });
 
+    const kudosData = response.data.kudos || [];
+
     return {
-      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      data: kudosData.map((kudos) => this.mapKudosResponse(kudos)),
       pagination: response.pagination || {
         page: params.page || 1,
         limit: params.limit || 10,
-        total: response.data.length,
-        pages: Math.ceil(response.data.length / (params.limit || 10)),
+        total: kudosData.length,
+        pages: Math.ceil(kudosData.length / (params.limit || 10)),
       },
     };
   }
@@ -149,19 +155,21 @@ export class KudosRepositoryImpl
     };
 
     const response = await this.httpService.get<
-      ApiKudosResponse<KudosApiData[]>
+      ApiKudosResponse<{ kudos: KudosApiData[] }>
     >({
       path,
       queryParams: queryParams as Record<string, string | number | boolean>,
     });
 
+    const kudosData = response.data.kudos || [];
+
     return {
-      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      data: kudosData.map((kudos) => this.mapKudosResponse(kudos)),
       pagination: response.pagination || {
         page: params.page || 1,
         limit: params.limit || 10,
-        total: response.data.length,
-        pages: Math.ceil(response.data.length / (params.limit || 10)),
+        total: kudosData.length,
+        pages: Math.ceil(kudosData.length / (params.limit || 10)),
       },
     };
   }
@@ -179,13 +187,13 @@ export class KudosRepositoryImpl
     };
 
     const response = await this.httpService.post<
-      ApiKudosResponse<KudosApiData>
+      ApiKudosResponse<{ kudos: KudosApiData }>
     >({
       path,
       body: body as Record<string, unknown>,
     });
 
-    return this.mapKudosResponse(response.data);
+    return this.mapKudosResponse(response.data.kudos);
   }
 
   async update(id: number, kudos: Partial<Kudos>): Promise<Kudos> {
@@ -198,14 +206,14 @@ export class KudosRepositoryImpl
     if (kudos.team) body.teamId = kudos.team.id;
     if (kudos.category) body.categoryId = kudos.category.id;
 
-    const response = await this.httpService.put<ApiKudosResponse<KudosApiData>>(
-      {
-        path,
-        body,
-      }
-    );
+    const response = await this.httpService.put<
+      ApiKudosResponse<{ kudos: KudosApiData }>
+    >({
+      path,
+      body,
+    });
 
-    return this.mapKudosResponse(response.data);
+    return this.mapKudosResponse(response.data.kudos);
   }
 
   async delete(id: number): Promise<void> {

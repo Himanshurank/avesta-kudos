@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useAuthContext } from "@/components/contexts/AuthContext";
 import toast from "react-hot-toast";
@@ -73,32 +73,21 @@ const UserManagementPage: React.FC = () => {
   };
 
   // Data fetching
-  const fetchUsers = async (page = 1, limit = 10) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await container.getAllUsersUseCase.execute({
-        page,
-        limit,
-        roleId: selectedRole !== "All" ? getRoleId(selectedRole) : undefined,
-        approvalStatus: selectedStatus !== "All" ? selectedStatus : undefined,
-      });
+  const fetchUsers = useCallback(
+    async (page = 1, limit = 10) => {
+      setIsLoading(true);
+      setError(null);
 
-      if (!result || !result.users || !Array.isArray(result.users)) {
-        console.error("API response format is unexpected:", result);
-        setError("Received unexpected data format from the server");
-        setUsers([]);
-        setPagination({
-          totalItems: 0,
-          itemsPerPage: 10,
-          currentPage: 1,
-          totalPages: 1,
+      try {
+        const result = await container.getAllUsersUseCase.execute({
+          page,
+          limit,
+          roleId: selectedRole !== "All" ? getRoleId(selectedRole) : undefined,
+          approvalStatus: selectedStatus !== "All" ? selectedStatus : undefined,
         });
-        return;
-      }
 
-      const mappedUsers = result.users.map((apiUser) => {
-        return {
+        // Map the API response to the format expected by the UI
+        const mappedUsers = result.users.map((apiUser) => ({
           id: apiUser.id || 0,
           name: apiUser.name || "Unknown",
           email: apiUser.email || "No email",
@@ -109,32 +98,25 @@ const UserManagementPage: React.FC = () => {
           createdAt: apiUser.createdAt
             ? new Date(apiUser.createdAt).toISOString().split("T")[0]
             : "Unknown date",
-        };
-      });
+        }));
 
-      setUsers(mappedUsers);
+        setUsers(mappedUsers);
+        setPagination({
+          totalItems: result.pagination.total,
+          itemsPerPage: limit,
+          currentPage: page,
+          totalPages: result.pagination.pages,
+        });
 
-      setPagination({
-        totalItems: result.pagination?.total || 0,
-        itemsPerPage: result.pagination?.limit || 10,
-        currentPage: result.pagination?.page || 1,
-        totalPages: result.pagination?.pages || 1,
-      });
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      setError("Failed to load users. Please try again later.");
-      toast.error("Failed to load users");
-      setUsers([]);
-      setPagination({
-        totalItems: 0,
-        itemsPerPage: 10,
-        currentPage: 1,
-        totalPages: 1,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        setError("Failed to load users. Please try again.");
+        setIsLoading(false);
+      }
+    },
+    [selectedRole, selectedStatus]
+  );
 
   const getFilteredUsers = () => {
     return users.filter((user) => {
@@ -258,7 +240,14 @@ const UserManagementPage: React.FC = () => {
     if (user) {
       fetchUsers(pagination.currentPage, pagination.itemsPerPage);
     }
-  }, [user, selectedRole, selectedStatus, pagination.currentPage]);
+  }, [
+    user,
+    selectedRole,
+    selectedStatus,
+    pagination.currentPage,
+    pagination.itemsPerPage,
+    fetchUsers,
+  ]);
 
   useEffect(() => {
     if (!loading && !user) {

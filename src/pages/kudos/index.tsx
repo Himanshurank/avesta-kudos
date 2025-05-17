@@ -83,14 +83,30 @@ const ITEMS_PER_PAGE = 10;
 
 // Transform Kudos entity to the format expected by KudosPageTemplate
 const transformKudosForDisplay = (kudos: Kudos) => {
+  // Check if recipients is an array, and if not, handle it gracefully
+  let recipientNames = "Unknown";
+
+  if (Array.isArray(kudos.recipients)) {
+    recipientNames = kudos.recipients.map((r) => r.name).join(", ");
+  } else if (
+    typeof kudos.recipients === "object" &&
+    kudos.recipients !== null
+  ) {
+    // Handle the case where recipients might be a single object
+    const singleRecipient = kudos.recipients as unknown as { name?: string };
+    recipientNames = singleRecipient.name || "Unknown";
+  }
+
   return {
     id: kudos.id.toString(),
-    recipientName: kudos.recipients.map((r) => r.name).join(", "),
-    teamName: kudos.team.name,
-    category: kudos.category.name,
-    message: kudos.message,
-    createdBy: kudos.createdBy.name,
-    createdAt: new Date(kudos.createdAt).toLocaleDateString(),
+    recipientName: recipientNames,
+    teamName: kudos.team?.name || "Unknown Team",
+    category: kudos.category?.name || "Unknown Category",
+    message: kudos.message || "",
+    createdBy: kudos.createdBy?.name || "Unknown",
+    createdAt: kudos.createdAt
+      ? new Date(kudos.createdAt).toLocaleDateString()
+      : "Unknown date",
   };
 };
 
