@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Digital Kudos Wall is a hackathon project designed to create a web application that enables public recognition and appreciation among colleagues. This project addresses the need for fostering a positive workplace culture through a simple yet effective digital platform for giving and receiving recognition.
+The Digital Kudos Wall is a hackathon project designed to create a web application that enables public recognition and appreciation among colleagues. This project addresses the need for fostering a positive workplace culture through a simple yet effective digital platform for giving and receiving recognition. The platform implements a secure authentication-first approach where users must login before accessing any features, with role-based access to different dashboards.
 
 ## Project Goals
 
@@ -73,8 +73,22 @@ The Digital Kudos Wall is a hackathon project designed to create a web applicati
 
 ## Key Features
 
+### Authentication System
+
+- Authentication-first approach: Initial access limited to login/register screens
+- Secure registration with email validation
+- Account approval workflow: New signups require Super Admin approval
+- Super Admin can assign Admin or User role to new accounts
+- Login with JWT token generation
+- User session management
+- Role-based dashboards and access control:
+  - Super Admin: Full system administration dashboard
+  - Admin: Kudos management and analytics dashboard
+  - User: Personal kudos dashboard with limited features
+
 ### Kudos Creation and Display
 
+- Role-appropriate dashboards after authentication
 - Form for creating kudos with recipient, team, category, and message
 - Public kudos wall with card-based display
 - Comprehensive search and filter functionality:
@@ -93,15 +107,6 @@ The Digital Kudos Wall is a hackathon project designed to create a web applicati
 - Assign user roles (Admin or User)
 - Manage existing user accounts
 - View user activity logs
-
-### Authentication System
-
-- Secure registration with email validation
-- Account approval workflow: New signups require Super Admin approval
-- Super Admin can assign Admin or User role to new accounts
-- Login with JWT token generation
-- User session management
-- Role-based access control (Super Admin, Admin, User)
 
 ### Analytics Dashboard
 
@@ -166,28 +171,35 @@ The Digital Kudos Wall is a hackathon project designed to create a web applicati
    - Dependency installation
    - CI/CD pipeline setup
 
-2. **Core Functionality Development**:
+2. **Authentication & Dashboard Development**:
+
+   - Login and registration system implementation
+   - Role-based dashboard scaffolding
+   - Authentication guards and route protection
+   - User session management
+
+3. **Core Functionality Development**:
 
    - Database models implementation
    - API endpoints creation
    - Frontend component development
-   - Authentication system implementation
+   - Role-specific feature implementation
 
-3. **Feature Enhancement**:
+4. **Feature Enhancement**:
 
    - Analytics dashboard development
    - Search and filter functionality
    - UI/UX refinement
    - Performance optimization
 
-4. **Testing & Quality Assurance**:
+5. **Testing & Quality Assurance**:
 
    - Test suite implementation
    - Code review process
    - Bug fixing
    - Documentation
 
-5. **Deployment**:
+6. **Deployment**:
    - Docker container creation
    - Deployment configuration
    - Demo preparation

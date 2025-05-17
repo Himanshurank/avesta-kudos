@@ -3,251 +3,59 @@ description: Atomic Architecture is a software design methodology that organizes
 globs:
 alwaysApply: false
 ---
-# Atomic Architecture
+# Atomic Design Principles
 
-This document provides comprehensive guidelines for implementing the Atomic Architecture pattern in your projects.
+Follow these guidelines when creating UI components to ensure a consistent and maintainable component hierarchy. This methodology breaks down interfaces into five distinct levels (atoms, molecules, organisms, templates, and pages), helping to build component systems in a modular, reusable, and organized way. These principles are essential for creating scalable UIs, consistent user experiences, and efficient development workflows.
 
-## 1. Core Structure
+## Component Hierarchy
 
-Atomic Architecture organizes components in increasing complexity:
+### Atoms
+- Located in `src/components/atoms/`
+- Smallest UI building blocks (buttons, inputs, icons)
+- Should be highly reusable and stateless
+- Focus on a single UI element
+- Examples: Button, Input, Icon, Typography
 
-### 1.1 Component Hierarchy
+### Molecules
+- Located in `src/components/molecules/`
+- Combinations of atoms that work together
+- Form small functional groups
+- Still relatively simple and focused
+- Examples: SearchInput (input + button), FormField (label + input)
 
-1. **Atoms**: Smallest UI elements, helpers, and utility functions
-   - Basic inputs, buttons, icons, utility functions
-   - Located in `src/atoms/` or `src/components/atoms/`
-   - Self-contained with minimal dependencies
+### Organisms
+- Located in `src/components/organisms/`
+- Complex UI sections made of molecules and atoms
+- Self-contained components that represent distinct sections
+- May maintain their own state
+- Examples: Forms, Headers, Navigation menus
 
-2. **Molecules**: Simple combinations of atoms
-   - Form groups, search bars, card components
-   - Located in `src/molecules/` or `src/components/molecules/`
-   - May have state but limited business logic
+### Templates
+- Located in `src/components/templates/`
+- Page layouts without specific content
+- Define structure and placement of organisms
+- Handle responsiveness and layout concerns
+- Examples: DashboardTemplate, ResumeEditorTemplate
 
-3. **Organisms**: Complex UI sections
-   - Navigation bars, dashboards, data tables
-   - Located in `src/organisms/` or `src/components/organisms/`
-   - Can contain internal state management
+### Pages
+- Located in `src/pages/`
+- Complete views with actual content
+- Combine templates with real data
+- Handle page-specific logic and state
 
-4. **Templates**: Page layouts without specific content
-   - Located in `src/templates/` or `src/components/templates/`
-   - Define structure but not content
+## Implementation Guidelines
 
-5. **Pages**: Complete views with specific content
-   - Located in `src/pages/` or equivalent
-   - Compose templates with actual data
+- Components should be built from the atomic level up
+- Higher-level components should only import from lower levels (or same level)
+- Keep styling consistent using shared design tokens
+- Use TypeScript interfaces to define component props
+- Include helpful prop comments for complex components
+- Implement responsive design at appropriate levels
 
-### 1.2 Directory Structure
+## Component Naming Conventions
 
-```
-src/
-├── atoms/
-│   ├── Button/
-│   │   ├── Button.tsx
-│   │   ├── Button.test.tsx
-│   │   ├── Button.module.scss
-│   │   └── index.ts
-│   ├── Input/
-│   │   └── ...
-│   └── index.ts
-├── molecules/
-│   ├── SearchBar/
-│   │   ├── SearchBar.tsx
-│   │   └── ...
-│   └── index.ts
-├── organisms/
-│   ├── NavBar/
-│   │   └── ...
-│   └── index.ts
-└── templates/
-    ├── DashboardTemplate/
-    │   └── ...
-    └── index.ts
-```
-
-## 2. Implementation Rules
-
-### 2.1 Component Design
-
-- Each component should have a single responsibility
-- Components should use explicit props/parameters
-- Prefer composition over inheritance
-- Higher-level components should not reach into lower-level implementation details
-- Use TypeScript interfaces to define component contracts
-- Export each component from its directory's index file
-
-### 2.2 Naming Conventions
-
-- Component files: PascalCase.tsx (React) or PascalCase.vue (Vue)
-- Utility files: camelCase.ts
-- Test files: ComponentName.test.tsx
-- Style files: ComponentName.module.css/scss
-
-## 3. Component Composition
-
-### 3.1 Composition Over Inheritance
-
-```typescript
-// Good - Composition
-const Card = () => (
-  <div className={styles.card}>
-    <CardHeader />
-    <CardBody>
-      <CardContent />
-    </CardBody>
-    <CardFooter />
-  </div>
-);
-
-// Avoid - Inheritance
-class CustomCard extends BaseCard {
-  render() {
-    return <div>{super.render()}</div>;
-  }
-}
-```
-
-### 3.2 Prop Drilling
-
-- Minimize by using context or state management for deeply nested components
-
-## 4. Data Flow
-
-### 4.1 Component Communication (Props Down, Events Up)
-
-```
-Page/Feature
-   ↓ props     ↑ events
-Template
-   ↓ props     ↑ events
-Organism
-   ↓ props     ↑ events
-Molecule
-   ↓ props     ↑ events
-Atom
-```
-
-- Pass data downward through props
-- Communicate upward through events/callbacks
-- Avoid prop drilling with context when appropriate
-
-### 4.2 State Management Layers
-
-#### Local Component State
-- For UI-specific states (open/closed, focused, etc.)
-- Use React's useState or equivalent
-- Keep in the component where it's needed
-
-#### Shared State
-- For data needed by multiple components
-- Options based on scope:
-  - React Context for component trees
-  - Redux/Zustand for application-wide state
-  - Custom hooks for reusable logic
-
-#### External Data
-- Use data fetching libraries (React Query, SWR)
-- Implement repository pattern for data access
-- Create custom hooks for data access logic
-
-## 5. Implementation Examples
-
-### 5.1 Form Handling
-
-```typescript
-// Molecule: FormField
-const FormField = ({ label, value, onChange }) => (
-  <div>
-    <Label>{label}</Label>
-    <Input value={value} onChange={onChange} />
-  </div>
-);
-
-// Organism: UserForm
-const UserForm = ({ onSubmit, initialData }) => {
-  const [user, setUser] = useState(initialData);
-
-  const handleChange = (field) => (event) => {
-    setUser({ ...user, [field]: event.target.value });
-  };
-
-  return (
-    <Form onSubmit={() => onSubmit(user)}>
-      <FormField
-        label="Name"
-        value={user.name}
-        onChange={handleChange('name')}
-      />
-      <FormField
-        label="Email"
-        value={user.email}
-        onChange={handleChange('email')}
-      />
-      <Button type="submit">Save</Button>
-    </Form>
-  );
-};
-```
-
-### 5.2 Data Fetching
-
-```typescript
-// Custom hook (atom)
-const useUserData = (userId) => {
-  const { data, loading, error } = useFetch(`/api/users/${userId}`);
-  return { user: data, loading, error };
-};
-
-// Organism: UserProfile
-const UserProfile = ({ userId }) => {
-  const { user, loading, error } = useUserData(userId);
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error.message} />;
-
-  return (
-    <ProfileCard>
-      <Avatar src={user.avatar} />
-      <UserInfo name={user.name} email={user.email} />
-      <UserStats stats={user.stats} />
-    </ProfileCard>
-  );
-};
-```
-
-## 6. Best Practices
-
-### 6.1 Testing Strategy
-
-- **Atoms**: Focus on rendering and prop variations
-- **Molecules**: Test component integration and simple interactions
-- **Organisms**: Test complex interactions and state changes
-- **Templates/Pages**: Focus on integration tests
-
-### 6.2 Performance Considerations
-
-- Memoize components when beneficial:
-  ```typescript
-  // Memoize atom components that render frequently
-  const Button = React.memo(({ label, onClick }) => (
-    <button onClick={onClick}>{label}</button>
-  ));
-  ```
-
-- Use code splitting for larger organism and template components:
-  ```typescript
-  // Lazy load larger components
-  const DashboardTemplate = React.lazy(() => import('./DashboardTemplate'));
-  ```
-
-### 6.3 Design System Integration
-
-- Create a central design token system for colors, spacing, typography
-- Reference design tokens in atomic components for consistency
-- Document component usage with Storybook or similar tool
-
-### 6.4 Accessibility
-
-- Build accessibility into atoms and molecules
-- Ensure all interactive elements are keyboard navigable
-- Use ARIA attributes appropriately
-- Test with screen readers
+- Use PascalCase for component names
+- Name files after the component they contain
+- Prefix atoms with their type (e.g., ButtonPrimary, InputText)
+- Use descriptive names for all components
+- Include type suffix as needed (e.g., ResumeForm, UserCard)

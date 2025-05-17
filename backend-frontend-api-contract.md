@@ -5,7 +5,7 @@ This document defines the API contract between the frontend and backend services
 ## Base URL
 
 ```
-/api/v1
+/api
 ```
 
 ## Authentication
@@ -99,10 +99,15 @@ Response (200 OK):
   "data": {
     "token": "jwt_token_here",
     "user": {
-      "id": "user_id",
+      "id": 1,
       "email": "user@example.com",
       "name": "John Doe",
-      "role": "Admin|User|SuperAdmin",
+      "roles": [
+        {
+          "id": 1,
+          "name": "SUPER_ADMIN"
+        }
+      ],
       "approvalStatus": "Approved"
     }
   }
@@ -189,7 +194,7 @@ Query Parameters:
 
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
-- `role` (optional): Filter by role
+- `roleId` (optional): Filter by role ID
 - `approvalStatus` (optional): Filter by approval status
 
 Response (200 OK):
@@ -199,10 +204,15 @@ Response (200 OK):
   "success": true,
   "data": [
     {
-      "id": "user_id_1",
+      "id": 1,
       "email": "user1@example.com",
       "name": "User One",
-      "role": "Admin",
+      "roles": [
+        {
+          "id": 2,
+          "name": "ADMIN"
+        }
+      ],
       "approvalStatus": "Approved",
       "createdAt": "2023-04-01T12:00:00Z",
       "updatedAt": "2023-04-01T12:00:00Z"
@@ -229,10 +239,15 @@ Response (200 OK):
 {
   "success": true,
   "data": {
-    "id": "user_id",
+    "id": 1,
     "email": "user@example.com",
     "name": "John Doe",
-    "role": "Admin",
+    "roles": [
+      {
+        "id": 2,
+        "name": "ADMIN"
+      }
+    ],
     "approvalStatus": "Approved",
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T12:00:00Z"
@@ -251,7 +266,7 @@ Request Body:
 ```json
 {
   "name": "Updated Name",
-  "role": "Admin" // Only SuperAdmin can update roles
+  "roleIds": [1, 2] // Only SuperAdmin can update roles
 }
 ```
 
@@ -261,10 +276,19 @@ Response (200 OK):
 {
   "success": true,
   "data": {
-    "id": "user_id",
+    "id": 1,
     "email": "user@example.com",
     "name": "Updated Name",
-    "role": "Admin",
+    "roles": [
+      {
+        "id": 1,
+        "name": "SUPER_ADMIN"
+      },
+      {
+        "id": 2,
+        "name": "ADMIN"
+      }
+    ],
     "approvalStatus": "Approved",
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T13:00:00Z"
@@ -300,7 +324,7 @@ Request Body:
 ```json
 {
   "approvalStatus": "Approved|Rejected",
-  "role": "Admin|User" // Required when approving
+  "roleIds": [2, 3] // Required when approving
 }
 ```
 
@@ -327,10 +351,12 @@ Request Body:
 
 ```json
 {
-  "recipientName": "Jane Doe",
-  "teamName": "Engineering",
-  "category": "Helpful",
-  "message": "Thanks for helping with the project!"
+  "message": "Thanks for helping with the project!",
+  "recipientIds": [2, 3],
+  "teamId": 1,
+  "categoryId": 2,
+  "tagIds": [1, 5],
+  "mediaIds": [12]
 }
 ```
 
@@ -340,15 +366,47 @@ Response (201 Created):
 {
   "success": true,
   "data": {
-    "id": "kudos_id",
-    "recipientName": "Jane Doe",
-    "teamName": "Engineering",
-    "category": "Helpful",
+    "id": 1,
     "message": "Thanks for helping with the project!",
     "createdBy": {
-      "id": "user_id",
+      "id": 1,
       "name": "John Doe"
     },
+    "recipients": [
+      {
+        "id": 2,
+        "name": "Jane Doe"
+      },
+      {
+        "id": 3,
+        "name": "Bob Smith"
+      }
+    ],
+    "team": {
+      "id": 1,
+      "name": "Engineering"
+    },
+    "category": {
+      "id": 2,
+      "name": "Helpful"
+    },
+    "tags": [
+      {
+        "id": 1,
+        "name": "collaboration"
+      },
+      {
+        "id": 5,
+        "name": "support"
+      }
+    ],
+    "media": [
+      {
+        "id": 12,
+        "url": "https://example.com/media/12.jpg",
+        "type": "image"
+      }
+    ],
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T12:00:00Z"
   }
@@ -365,12 +423,10 @@ Query Parameters:
 
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
-- `teamName` (optional): Filter by team name
 - `teamId` (optional): Filter by team ID
-- `category` (optional): Filter by category name
 - `categoryId` (optional): Filter by category ID
-- `recipientName` (optional): Filter by recipient name
-- `createdBy` (optional): Filter by creator user ID
+- `recipientId` (optional): Filter by recipient user ID
+- `createdById` (optional): Filter by creator user ID
 - `search` (optional): Search in message content
 - `startDate` (optional): Filter by date range start
 - `endDate` (optional): Filter by date range end
@@ -384,14 +440,25 @@ Response (200 OK):
   "success": true,
   "data": [
     {
-      "id": "kudos_id",
-      "recipientName": "Jane Doe",
-      "teamName": "Engineering",
-      "category": "Helpful",
+      "id": 1,
       "message": "Thanks for helping with the project!",
       "createdBy": {
-        "id": "user_id",
+        "id": 1,
         "name": "John Doe"
+      },
+      "recipients": [
+        {
+          "id": 2,
+          "name": "Jane Doe"
+        }
+      ],
+      "team": {
+        "id": 1,
+        "name": "Engineering"
+      },
+      "category": {
+        "id": 2,
+        "name": "Helpful"
       },
       "createdAt": "2023-04-01T12:00:00Z",
       "updatedAt": "2023-04-01T12:00:00Z"
@@ -418,15 +485,39 @@ Response (200 OK):
 {
   "success": true,
   "data": {
-    "id": "kudos_id",
-    "recipientName": "Jane Doe",
-    "teamName": "Engineering",
-    "category": "Helpful",
+    "id": 1,
     "message": "Thanks for helping with the project!",
     "createdBy": {
-      "id": "user_id",
+      "id": 1,
       "name": "John Doe"
     },
+    "recipients": [
+      {
+        "id": 2,
+        "name": "Jane Doe"
+      }
+    ],
+    "team": {
+      "id": 1,
+      "name": "Engineering"
+    },
+    "category": {
+      "id": 2,
+      "name": "Helpful"
+    },
+    "tags": [
+      {
+        "id": 1,
+        "name": "collaboration"
+      }
+    ],
+    "media": [
+      {
+        "id": 12,
+        "url": "https://example.com/media/12.jpg",
+        "type": "image"
+      }
+    ],
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T12:00:00Z"
   }
@@ -443,10 +534,12 @@ Request Body:
 
 ```json
 {
-  "recipientName": "Jane Doe",
-  "teamName": "Engineering",
-  "category": "Exceptional",
-  "message": "Updated kudos message"
+  "message": "Updated kudos message",
+  "recipientIds": [2, 4],
+  "teamId": 1,
+  "categoryId": 3,
+  "tagIds": [1, 3],
+  "mediaIds": [12, 15]
 }
 ```
 
@@ -456,15 +549,52 @@ Response (200 OK):
 {
   "success": true,
   "data": {
-    "id": "kudos_id",
-    "recipientName": "Jane Doe",
-    "teamName": "Engineering",
-    "category": "Exceptional",
+    "id": 1,
     "message": "Updated kudos message",
     "createdBy": {
-      "id": "user_id",
+      "id": 1,
       "name": "John Doe"
     },
+    "recipients": [
+      {
+        "id": 2,
+        "name": "Jane Doe"
+      },
+      {
+        "id": 4,
+        "name": "Alice Johnson"
+      }
+    ],
+    "team": {
+      "id": 1,
+      "name": "Engineering"
+    },
+    "category": {
+      "id": 3,
+      "name": "Exceptional"
+    },
+    "tags": [
+      {
+        "id": 1,
+        "name": "collaboration"
+      },
+      {
+        "id": 3,
+        "name": "excellence"
+      }
+    ],
+    "media": [
+      {
+        "id": 12,
+        "url": "https://example.com/media/12.jpg",
+        "type": "image"
+      },
+      {
+        "id": 15,
+        "url": "https://example.com/media/15.gif",
+        "type": "gif"
+      }
+    ],
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T13:00:00Z"
   }
@@ -499,14 +629,15 @@ Request Body:
 ```json
 {
   "filters": {
-    "teams": ["team_id_1", "team_id_2"],
-    "categories": ["category_id_1", "category_id_2"],
-    "recipients": ["Jane", "John"],
-    "createdBy": ["user_id_1", "user_id_2"],
+    "teamIds": [1, 2],
+    "categoryIds": [1, 2],
+    "recipientIds": [2, 3],
+    "createdByIds": [1, 4],
     "dateRange": {
       "start": "2023-01-01T00:00:00Z",
       "end": "2023-12-31T23:59:59Z"
     },
+    "tagIds": [1, 3, 5],
     "keywords": ["helpful", "teamwork", "support"],
     "messageContains": "project"
   },
@@ -528,15 +659,32 @@ Response (200 OK):
   "success": true,
   "data": [
     {
-      "id": "kudos_id",
-      "recipientName": "Jane Doe",
-      "teamName": "Engineering",
-      "category": "Helpful",
+      "id": 1,
       "message": "Thanks for helping with the project!",
       "createdBy": {
-        "id": "user_id",
+        "id": 1,
         "name": "John Doe"
       },
+      "recipients": [
+        {
+          "id": 2,
+          "name": "Jane Doe"
+        }
+      ],
+      "team": {
+        "id": 1,
+        "name": "Engineering"
+      },
+      "category": {
+        "id": 2,
+        "name": "Helpful"
+      },
+      "tags": [
+        {
+          "id": 1,
+          "name": "collaboration"
+        }
+      ],
       "createdAt": "2023-04-01T12:00:00Z",
       "updatedAt": "2023-04-01T12:00:00Z"
     }
@@ -1155,21 +1303,32 @@ Response (200 OK):
 
 ### Permissions
 
-| Endpoint                    | Super Admin | Admin | User |
-| --------------------------- | ----------- | ----- | ---- |
-| Auth endpoints              | ✅          | ✅    | ✅   |
-| GET /users                  | ✅          | ✅    | ❌   |
-| GET /users/:id              | ✅          | ✅    | ❌   |
-| PUT/DELETE /users           | ✅          | ❌    | ❌   |
-| PATCH /users/:id/approval   | ✅          | ❌    | ❌   |
-| GET /kudos                  | ✅          | ✅    | ✅   |
-| POST/PUT/DELETE /kudos      | ✅          | ✅    | ❌   |
-| POST /kudos/filter          | ✅          | ✅    | ✅   |
-| GET /kudos/filter/:filterId | ✅          | ✅    | ✅   |
-| Saved filters endpoints     | ✅          | ✅    | ✅   |
-| Teams endpoints             | ✅          | ✅    | ❌   |
-| Categories endpoints        | ✅          | ✅    | ❌   |
-| Analytics endpoints         | ✅          | ✅    | ❌   |
+The application uses a role-based access control system with granular permissions.
+
+#### Default Roles and Permissions
+
+| Role Name   | Description                                             |
+| ----------- | ------------------------------------------------------- |
+| SUPER_ADMIN | Users with full system access including user management |
+| ADMIN       | Users with permissions to create, edit, and view kudos  |
+| USER        | Regular users with permissions to view kudos only       |
+
+#### Permission Types
+
+| Permission     | Description                | SUPER_ADMIN | ADMIN | USER |
+| -------------- | -------------------------- | ----------- | ----- | ---- |
+| USER_CREATE    | Create users               | ✅          | ❌    | ❌   |
+| USER_READ      | View users                 | ✅          | ✅    | ❌   |
+| USER_UPDATE    | Update users               | ✅          | ❌    | ❌   |
+| USER_DELETE    | Delete users               | ✅          | ❌    | ❌   |
+| USER_APPROVE   | Approve user registrations | ✅          | ❌    | ❌   |
+| KUDOS_CREATE   | Create kudos               | ✅          | ✅    | ❌   |
+| KUDOS_READ     | View kudos                 | ✅          | ✅    | ✅   |
+| KUDOS_UPDATE   | Update kudos               | ✅          | ✅    | ❌   |
+| KUDOS_DELETE   | Delete kudos               | ✅          | ✅    | ❌   |
+| ANALYTICS_VIEW | View analytics dashboard   | ✅          | ✅    | ❌   |
+
+These permissions are used to control access to all endpoints in the API.
 
 ## Rate Limiting
 
@@ -1196,10 +1355,15 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
 
 ```json
 {
-  "id": "string",
+  "id": number,
   "email": "string",
   "name": "string",
-  "role": "SuperAdmin|Admin|User",
+  "roles": [
+    {
+      "id": number,
+      "name": "string"
+    }
+  ],
   "approvalStatus": "Pending|Approved|Rejected",
   "createdAt": "datetime",
   "updatedAt": "datetime"
@@ -1210,15 +1374,39 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
 
 ```json
 {
-  "id": "string",
-  "recipientName": "string",
-  "teamName": "string",
-  "category": "string",
+  "id": number,
   "message": "string",
   "createdBy": {
-    "id": "string",
+    "id": number,
     "name": "string"
   },
+  "recipients": [
+    {
+      "id": number,
+      "name": "string"
+    }
+  ],
+  "team": {
+    "id": number,
+    "name": "string"
+  },
+  "category": {
+    "id": number,
+    "name": "string"
+  },
+  "media": [
+    {
+      "id": number,
+      "url": "string",
+      "type": "image|gif|video"
+    }
+  ],
+  "tags": [
+    {
+      "id": number,
+      "name": "string"
+    }
+  ],
   "createdAt": "datetime",
   "updatedAt": "datetime"
 }
@@ -1228,7 +1416,7 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
 
 ```json
 {
-  "id": "string",
+  "id": number,
   "name": "string",
   "description": "string",
   "createdAt": "datetime",
@@ -1240,7 +1428,38 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
 
 ```json
 {
-  "id": "string",
+  "id": number,
+  "name": "string",
+  "description": "string",
+  "createdAt": "datetime",
+  "updatedAt": "datetime"
+}
+```
+
+### Role
+
+```json
+{
+  "id": number,
+  "name": "string",
+  "description": "string",
+  "permissions": [
+    {
+      "id": number,
+      "name": "string",
+      "description": "string"
+    }
+  ],
+  "createdAt": "datetime",
+  "updatedAt": "datetime"
+}
+```
+
+### Permission
+
+```json
+{
+  "id": number,
   "name": "string",
   "description": "string",
   "createdAt": "datetime",
@@ -1252,14 +1471,14 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
 
 ```json
 {
-  "id": "string",
+  "id": number,
   "name": "string",
   "description": "string",
   "filters": {
-    "teams": ["string"],
-    "categories": ["string"],
-    "recipients": ["string"],
-    "createdBy": ["string"],
+    "teams": [number],
+    "categories": [number],
+    "recipients": [number],
+    "createdBy": [number],
     "dateRange": {
       "start": "datetime|null",
       "end": "datetime|null"
@@ -1271,7 +1490,7 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
     "field": "string",
     "order": "asc|desc"
   },
-  "userId": "string",
+  "userId": number,
   "createdAt": "datetime",
   "updatedAt": "datetime"
 }

@@ -1,263 +1,260 @@
 ---
-description:
+description: Layered architecture that enforces clean separation of concerns, unidirectional dependencies, and domain-driven design. Uses TypeScript with strict patterns for entities, use cases, DTOs, and repositories. Includes comprehensive naming conventions, error handling, and validation rules.
 globs:
 alwaysApply: false
 ---
-# Layered Architecture
+# Layered Architecture Guidelines
 
-**Description:**
-Defines the structure, responsibilities, and interactions between the four main architectural layers in the TimeWarden application: Presentation, Application, Domain, and Infrastructure. This pattern provides clear separation of concerns and helps maintain a clean, testable codebase.
+Reference: @Layered Architecture Guide
 
-## Layer Structure
+## Folder Structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Presentation Layer                       │
-│    (Atoms, Molecules, Organisms, Templates, Pages)          │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Application Layer                        │
-│          (Services, DTOs, Application Logic)                │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Domain Layer                           │
-│      (Entities, Value Objects, Domain Services)             │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Infrastructure Layer                       │
-│ (Repositories, External API Clients, Data Access)           │
-└─────────────────────────────────────────────────────────────┘
+src/
+├── domain/                 # Core business logic and rules
+│   ├── entities/           # Business objects, core functionality
+│   ├── interfaces/         # Contracts for repositories and services
+│   ├── valueObjects/       # Immutable typed values
+│   ├── enums/              # Type enumerations
+│   └── errors/             # Domain-specific errors
+├── application/            # Orchestrates domain logic
+│   ├── useCases/           # Business operations (features)
+│   ├── services/           # Domain services
+│   ├── dtos/               # Data transfer objects
+│   ├── mappers/            # Transform between layers
+│   ├── validators/         # Validation logic
+│   └── events/             # Application events
+├── infrastructure/         # External implementations
+│   ├── repositories/       # Data access implementations
+│   ├── services/           # External service implementations
+│   ├── api/                # API clients
+│   ├── database/           # Database adapters
+│   ├── cache/              # Caching mechanisms
+│   └── config/             # Configuration
+├── presentation/           # UI Layer
+│   ├── pages/              # Page components
+│   ├── components/         # UI components
+│   ├── hooks/              # React hooks
+│   ├── contexts/           # React contexts
+│   ├── state/              # State management
+│   └── utils/              # UI utilities
+└── shared/                 # Cross-cutting concerns
+    ├── utils/              # Common utilities
+    ├── constants/          # Application constants
+    ├── types/              # Shared type definitions
+    ├── di/                 # Dependency injection
+    └── logging/            # Logging functionality
 ```
 
-## Layer Definitions and Responsibilities
+## Layer Dependencies and Responsibilities
 
-### 1. Presentation Layer
-
-**Location:** `src/presentation/*`
-
-**Responsibilities:**
-- Implement UI components using Atomic Design principles
-- Handle user interactions and input validation
-- Display data to users in appropriate formats
-- Use dependency injection to access application services
-- Never directly access domain or infrastructure layers
-
-**Components:**
-- Atoms: `src/presentation/atoms/`
-- Molecules: `src/presentation/molecules/`
-- Organisms: `src/presentation/organisms/`
-- Templates: `src/presentation/templates/`
-- Pages: `src/presentation/pages/`
-
-**Example:**
+### 1. Domain Layer (`src/domain/`)
+- **Dependencies**: None (innermost layer)
+- **Responsibilities**: Core business logic and rules
+- **Example Entity**:
 ```typescript
-// src/presentation/pages/TodoPage.tsx
-const TodoPage = ({ todoService }: { todoService: ITodoService }) => {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+export class Resume {
+  private _id: string;
+  private _sections: ResumeSection[];
+  private _lastUpdated: Date;
 
-  useEffect(() => {
-    const loadTodos = async () => {
-      setLoading(true);
-      try {
-        const result = await todoService.getTodos();
-        setTodos(result);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to load todos'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTodos();
-  }, [todoService]);
-
-  const handleAddTodo = async (todoData: CreateTodoDto) => {
-    try {
-      const newTodo = await todoService.addTodo(todoData);
-      setTodos(prev => [...prev, newTodo]);
-      return newTodo;
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to add todo'));
-      throw err;
-    }
-  };
-
-  // UI rendering logic
-  return (
-    <TodoTemplate>
-      <TodoList todos={todos} loading={loading} error={error} />
-      <TodoForm onSubmit={handleAddTodo} />
-    </TodoTemplate>
-  );
-};
-```
-
-### 2. Application Layer
-
-**Location:** `src/application/*`
-
-**Responsibilities:**
-- Implement business logic and use cases
-- Coordinate between domain and infrastructure layers
-- Transform data using DTOs and mappers
-- Define interfaces for infrastructure implementations
-- Handle application-specific validation and business rules
-- No direct dependency on presentation or infrastructure implementation details
-
-**Components:**
-- Services: `src/application/services/`
-- DTOs: `src/application/dto/`
-- Interfaces: `src/application/interfaces/`
-- Mappers: `src/application/mappers/`
-
-**Example:**
-```typescript
-// src/application/services/todo/TodoService.ts
-export class TodoService implements ITodoService {
-  constructor(private todoRepository: ITodoRepository) {}
-
-  async getTodos(): Promise<Todo[]> {
-    return this.todoRepository.findAll();
+  constructor(id: string, sections: ResumeSection[]) {
+    this._id = id;
+    this._sections = sections;
+    this._lastUpdated = new Date();
   }
 
-  async addTodo(todo: CreateTodoDto): Promise<Todo> {
-    // Business logic validation
-    if (!todo.title) {
-      throw new ValidationError('Title is required');
+  addSection(section: ResumeSection): void {
+    if (this.hasSection(section.type)) {
+      throw new Error(`Section of type ${section.type} already exists`);
     }
-
-    const newTodo = {
-      ...todo,
-      completed: false,
-      createdAt: new Date(),
-    };
-
-    return this.todoRepository.create(newTodo);
+    this._sections.push(section);
+    this._lastUpdated = new Date();
   }
 }
 ```
 
-### 3. Domain Layer
-
-**Location:** `src/domain/*`
-
-**Responsibilities:**
-- Define core business entities and value objects
-- Represent business concepts and relationships
-- Implement domain-specific business rules
-- No dependencies on other layers
-- Use plain TypeScript/JavaScript
-- Highly testable with unit tests
-
-**Components:**
-- Entities: `src/domain/entities/`
-- Value Objects: `src/domain/value-objects/`
-- Interfaces: `src/domain/interfaces/`
-- Errors: `src/domain/errors/`
-
-**Example:**
+- **Example Value Object**:
 ```typescript
-// src/domain/entities/Todo.ts
-export class Todo {
+export class DateRange {
   constructor(
-    public id: string,
-    public title: string,
-    public description: string,
-    public completed: boolean,
-    public createdAt: Date,
-    public dueDate?: Date
+    private readonly startDate: Date,
+    private readonly endDate: Date
+  ) {
+    if (startDate > endDate) {
+      throw new Error('Start date cannot be after end date');
+    }
+  }
+
+  get start(): Date {
+    return new Date(this.startDate);
+  }
+
+  get end(): Date {
+    return new Date(this.endDate);
+  }
+}
+```
+
+### 2. Application Layer (`src/application/`)
+- **Dependencies**: Domain Layer
+- **Responsibilities**: Business operations orchestration
+- **Example Use Case**:
+```typescript
+export class CreateResumeUseCase {
+  constructor(
+    private resumeRepository: IResumeRepository,
+    private eventBus: IEventBus
   ) {}
 
-  complete(): void {
-    this.completed = true;
-  }
+  async execute(params: CreateResumeParams): Promise<ResumeDto> {
+    // Validation
+    if (!this.isValidParams(params)) {
+      throw new ValidationError("Invalid parameters");
+    }
 
-  isOverdue(): boolean {
-    if (!this.dueDate) return false;
-    return !this.completed && this.dueDate < new Date();
+    // Business logic
+    const resume = new Resume(generateId(), params.sections);
+    await this.resumeRepository.save(resume);
+
+    // Events
+    this.eventBus.publish("RESUME_CREATED", { id: resume.id });
+
+    return ResumeMapper.toDto(resume);
   }
 }
 ```
 
-### 4. Infrastructure Layer
-
-**Location:** `src/infrastructure/*`
-
-**Responsibilities:**
-- Implement data access through repositories
-- Handle external system communication
-- Implement interfaces defined by application layer
-- Adapt external systems to application needs
-- Manage database connections and queries
-- Handle external API integration
-
-**Components:**
-- Repositories: `src/infrastructure/repositories/`
-- API Clients: `src/infrastructure/api/`
-- Storage: `src/infrastructure/storage/`
-- Database: `src/infrastructure/database/`
-
-**Example:**
+- **Example DTO**:
 ```typescript
-// src/infrastructure/repositories/todo/TodoRepository.ts
-export class TodoRepository implements ITodoRepository {
+export interface ResumeDto {
+  id: string;
+  sections: ResumeSectionDto[];
+  lastUpdated: string;
+  status: EResumeStatus;
+}
+```
+
+### 3. Infrastructure Layer (`src/infrastructure/`)
+- **Dependencies**: Domain Layer
+- **Responsibilities**: External implementations
+- **Example Repository**:
+```typescript
+export class ResumeRepositoryImpl implements IResumeRepository {
   constructor(private dataSource: DataSource) {}
 
-  async findAll(): Promise<Todo[]> {
-    return this.dataSource.todos.findMany();
-  }
-
-  async create(todo: CreateTodoDto): Promise<Todo> {
-    return this.dataSource.todos.create({
-      data: todo,
-    });
+  async findById(id: string): Promise<Resume | null> {
+    try {
+      const record = await this.dataSource.query(
+        "SELECT * FROM resumes WHERE id = ?",
+        [id]
+      );
+      return record ? this.mapToDomain(record) : null;
+    } catch (error) {
+      throw new RepositoryError("Failed to find resume", error);
+    }
   }
 }
 ```
 
-## Data Flow
+### 4. Presentation Layer (`src/presentation/`)
+- **Dependencies**: Application Layer
+- **Responsibilities**: UI and user interaction
+- **Example Component**:
+```typescript
+export function ResumeEditor() {
+  const { resume, loading, error } = useResume();
+  const { updateResume } = useResumeActions();
 
-1. User interacts with UI component (Presentation Layer)
-2. UI component calls application service directly (through props/dependency injection)
-3. Application service processes request (validation, transformation)
-4. Service uses domain entities and calls repository interface
-5. Repository implementation (Infrastructure Layer) performs data access
-6. Data flows back up through layers with appropriate transformations
+  if (loading) return <Spinner />;
+  if (error) return <ErrorMessage message={error.message} />;
+
+  return (
+    <div>
+      <h1>Resume Editor</h1>
+      <ResumeForm resume={resume} onSubmit={updateResume} />
+    </div>
+  );
+}
+```
+
+## Naming Conventions
+
+### File Naming
+- Use kebab-case for file names
+- Add appropriate suffixes:
+  - `.entity.ts` for domain entities
+  - `.interface.ts` for interfaces
+  - `.use-case.ts` for use cases
+  - `.component.tsx` for React components
+  - `.page.tsx` for page components
+  - `.hook.ts` for custom hooks
+
+### Code Naming
+- **Domain Layer**:
+  - Entities: PascalCase (e.g., `Resume`, `User`)
+  - Interfaces: `I` prefix (e.g., `IResumeRepository`)
+  - Enums: `E` prefix (e.g., `EResumeStatus`)
+  - Value Objects: PascalCase (e.g., `DateRange`)
+
+- **Application Layer**:
+  - Use Cases: Verb + Noun + "UseCase" (e.g., `CreateResumeUseCase`)
+  - Services: Noun + "Service" (e.g., `ResumeValidationService`)
+  - DTOs: Noun + "Dto" (e.g., `ResumeDto`)
+
+- **Infrastructure Layer**:
+  - Implementations: Interface name + "Impl" (e.g., `ResumeRepositoryImpl`)
+  - API Clients: Noun + "ApiClient" (e.g., `ResumeApiClient`)
+
+- **Presentation Layer**:
+  - Components: PascalCase (e.g., `ResumeEditor`)
+  - Pages: Noun + "Page" (e.g., `ResumeEditorPage`)
+  - Hooks: "use" + Feature (e.g., `useResume`)
 
 ## Best Practices
 
-1. **Clear Boundaries:**
-   - Each layer should only depend on layers below it
-   - Higher layers should only access lower layers through interfaces
-   - Avoid circular dependencies between layers
+### Domain Layer
+1. Keep business rules in domain objects
+2. Use value objects for complex attributes
+3. Make entities immutable when possible
+4. Validate all inputs in constructors
+5. Use domain events for side effects
+6. Keep domain layer framework-agnostic
+7. Document invariants and constraints
 
-2. **Dependency Injection:**
-   - Use constructor injection to provide dependencies
-   - Define interfaces for all important components
-   - Instantiate dependencies in composition root or IoC container
+### Application Layer
+1. Use dependency injection
+2. Keep use cases focused
+3. Handle all error cases
+4. Use DTOs for data transfer
+5. Implement proper validation
+6. Use mappers for transformations
+7. Document service methods
+8. Keep services stateless
 
-3. **Error Handling:**
-   - Domain layer: Business rule validation errors
-   - Application layer: Use case coordination errors
-   - Infrastructure layer: External system errors
-   - Transform technical errors into domain-specific errors when moving up layers
+### Infrastructure Layer
+1. Implement retry logic for external calls
+2. Use proper caching strategies
+3. Handle network errors gracefully
+4. Implement proper logging
+5. Document API endpoints
+6. Use connection pooling
+7. Implement circuit breakers
 
-4. **File Naming:**
-   - Consistent naming within each layer
-   - Entity-first naming (e.g., `TodoService.ts`, `TodoRepository.ts`)
-   - Interface names prefixed with "I" (e.g., `ITodoService.ts`)
+### Presentation Layer
+1. Follow atomic design principles
+2. Keep components pure when possible
+3. Implement proper loading states
+4. Use error boundaries
+5. Use proper prop types
+6. Document component props
+7. Implement proper accessibility
 
-5. **Testing Approach:**
-   - Domain layer: Unit tests for business rules
-   - Application layer: Unit tests with mocked repositories
-   - Infrastructure layer: Integration tests
-   - Presentation layer: Component tests
+## Anti-patterns to Avoid
+1. Layer skipping
+2. Domain layer with external dependencies
+3. Business logic in infrastructure
+4. Circular dependencies
+5. Fat controllers/components
+6. Leaky abstractions
+7. Monolithic services

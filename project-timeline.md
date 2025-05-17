@@ -23,6 +23,8 @@
 - [ ] Design system foundation
 - [ ] Mock API service implementation for frontend development
 - [ ] State management strategy (Context API setup)
+- [ ] Authentication strategy planning
+- [ ] Role-based routing and access control design
 
 ## Phase 2: Core Frontend Implementation (Weeks 2-3)
 
@@ -63,20 +65,23 @@
 ### Week 3, Days 1-5: Layout & Navigation Implementation
 
 - [ ] Layout templates
+  - [ ] Auth layout (login/register)
   - [ ] Main layout
-  - [ ] Dashboard layout
-  - [ ] Authentication layout
+  - [ ] Dashboard layouts (role-specific layouts)
+    - [ ] Super Admin dashboard layout
+    - [ ] Admin dashboard layout
+    - [ ] User dashboard layout
 - [ ] Navigation implementation
   - [ ] Mobile responsive navigation
   - [ ] Role-based navigation items
 - [ ] Route protection implementation
 - [ ] Page transitions
 
-## Phase 3: Frontend Features Implementation (Weeks 4-6)
+## Phase 3: Authentication & Dashboard Implementation (Weeks 4-5)
 
-### Week 4: Authentication Pages
+### Week 4: Authentication System
 
-- [ ] Route: `/auth/login`
+- [ ] Default Route: `/auth/login` (Redirect from `/`)
   - [ ] Login form
   - [ ] Form validation
   - [ ] Error handling
@@ -92,10 +97,33 @@
   - [ ] Password reset form
 - [ ] Authentication state management
 - [ ] JWT token storage and refresh
+- [ ] Role-based redirection after login
+- [ ] Authentication guards for protected routes
 
-### Week 5: Kudos Wall Implementation
+### Week 5: Role-Specific Dashboards
 
-- [ ] Route: `/` (Kudos Wall Home)
+- [ ] Route: `/dashboard` (Base dashboard with role-based views)
+  - [ ] Super Admin dashboard view
+    - [ ] System overview
+    - [ ] User approval stats
+    - [ ] Activity feed
+  - [ ] Admin dashboard view
+    - [ ] Kudos analytics
+    - [ ] Recent activity
+    - [ ] Quick actions
+  - [ ] User dashboard view
+    - [ ] Personal kudos feed
+    - [ ] Team activity
+    - [ ] Quick kudos creation
+- [ ] Role-specific navigation
+- [ ] Dashboard widgets and components
+- [ ] Landing page after login based on user role
+
+## Phase 4: Kudos Functionality Implementation (Weeks 6-7)
+
+### Week 6: Kudos Wall Implementation
+
+- [ ] Route: `/kudos` (Kudos Wall - Accessible post-login)
   - [ ] Kudos grid layout
   - [ ] Kudos card component
   - [ ] Infinite scroll implementation
@@ -110,8 +138,13 @@
 - [ ] Route: `/kudos/[id]`
   - [ ] Single kudos detailed view
   - [ ] Share functionality
-- [ ] Search and filtering functionality
-  - [ ] Filter component implementation
+- [ ] Role-based access control for kudos features
+  - [ ] Admin/Super Admin: Full create/edit/view access
+  - [ ] User: View access only
+
+### Week 7: Search and Filtering Functionality
+
+- [ ] Filter component implementation
   - [ ] By recipient name
   - [ ] By team
   - [ ] By category
@@ -122,14 +155,11 @@
   - [ ] Clear filters button
 - [ ] Filter persistence (URL query parameters)
 - [ ] Saved filters functionality
+- [ ] Role-appropriate filter options
 
-### Week 6: Admin Dashboard
+## Phase 5: Admin Features (Week 8)
 
-- [ ] Route: `/admin`
-  - [ ] Dashboard overview
-  - [ ] Stats cards
-  - [ ] Recent activity
-- [ ] Route: `/admin/users`
+- [ ] Route: `/admin` (Admin features - restricted to Admin/Super Admin roles)
   - [ ] User management table
   - [ ] Pagination
   - [ ] Search and filter
@@ -147,11 +177,11 @@
   - [ ] Teams management
   - [ ] Categories management
 
-## Phase 4: Analytics & Enhancement (Weeks 7-8)
+## Phase 6: Analytics & Enhancement (Weeks 9-10)
 
-### Week 7: Analytics Dashboard
+### Week 9: Analytics Dashboard
 
-- [ ] Route: `/analytics`
+- [ ] Route: `/analytics` (Restricted to Admin/Super Admin roles)
   - [ ] Analytics overview
   - [ ] Date range picker
   - [ ] Export functionality
@@ -167,8 +197,9 @@
   - [ ] Sentiment analysis visualization
 - [ ] Filter controls for all analytics views
 - [ ] Data export functionality (CSV, PDF)
+- [ ] Role-specific analytics views
 
-### Week 8: UI/UX Refinement
+### Week 10: UI/UX Refinement
 
 - [ ] Responsive design enhancements
   - [ ] Mobile optimization
@@ -192,38 +223,36 @@
   - [ ] Fallback UI components
   - [ ] Offline support
 
-## Phase 5: Testing & Quality Assurance (Weeks 9-10)
+## Phase 7: Testing & Quality Assurance (Weeks 11-12)
 
-### Week 9: Testing Implementation
+### Week 11: Testing Implementation
 
 - [ ] Unit tests
   - [ ] Component unit tests
   - [ ] Utility function tests
   - [ ] Hook tests
 - [ ] Integration tests
-  - [ ] Form submission flows
   - [ ] Authentication flows
+  - [ ] Role-based access tests
+  - [ ] Form submission flows
   - [ ] Filter functionality
-- [ ] Component tests
-  - [ ] Storybook implementation
-  - [ ] Visual regression tests
-  - [ ] Accessibility tests
 
-### Week 10: QA & Documentation
+### Week 12: QA & Documentation
 
 - [ ] End-to-end testing
-  - [ ] User journey tests
+  - [ ] User journey tests per role
   - [ ] Cross-browser testing
 - [ ] User acceptance testing
 - [ ] Bug fixing
 - [ ] Code documentation
 - [ ] User documentation
-  - [ ] User guide
+  - [ ] User guide per role
   - [ ] Admin guide
+  - [ ] Super Admin guide
 
-## Phase 6: Deployment & Demo (Week 11)
+## Phase 8: Deployment & Demo (Week 13)
 
-### Week 11, Days 1-3: Deployment Preparation
+### Week 13, Days 1-3: Deployment Preparation
 
 - [ ] Build optimization
 - [ ] Environment configuration
@@ -233,35 +262,37 @@
 - [ ] CI/CD pipeline implementation
 - [ ] Deployment testing
 
-### Week 11, Days 4-5: Final Demo Preparation
+### Week 13, Days 4-5: Final Demo Preparation
 
 - [ ] Demo script preparation
 - [ ] Sample data generation
 - [ ] Final bug fixes
 - [ ] Performance testing
 - [ ] Demo presentation preparation
+- [ ] Role-based demo scenarios
 
 ## Frontend Routes Summary
 
-| Route                   | Description        | Access Level      | Key Functionality              |
-| ----------------------- | ------------------ | ----------------- | ------------------------------ |
-| `/`                     | Kudos Wall Home    | All Users         | View kudos, filtering, sorting |
-| `/kudos/new`            | Create Kudos       | Admin, SuperAdmin | Create new kudos               |
-| `/kudos/[id]`           | Single Kudos       | All Users         | View single kudos details      |
-| `/auth/login`           | Login              | Unauthenticated   | User login                     |
-| `/auth/register`        | Register           | Unauthenticated   | User registration              |
-| `/auth/forgot-password` | Forgot Password    | Unauthenticated   | Request password reset         |
-| `/auth/reset-password`  | Reset Password     | Unauthenticated   | Reset password with token      |
-| `/admin`                | Admin Dashboard    | Admin, SuperAdmin | Overview statistics            |
-| `/admin/users`          | User Management    | SuperAdmin        | Manage users                   |
-| `/admin/users/[id]`     | User Details       | SuperAdmin        | Edit specific user             |
-| `/admin/users/pending`  | Pending Approvals  | SuperAdmin        | Approve/reject users           |
-| `/admin/settings`       | System Settings    | SuperAdmin        | Configure system               |
-| `/analytics`            | Analytics Overview | Admin, SuperAdmin | View all analytics             |
-| `/analytics/trends`     | Recognition Trends | Admin, SuperAdmin | View trends and patterns       |
-| `/analytics/keywords`   | Keyword Analysis   | Admin, SuperAdmin | Analyze message content        |
-| `/profile`              | User Profile       | All Users         | View user profile              |
-| `/profile/settings`     | Profile Settings   | All Users         | Update profile                 |
+| Route                   | Description        | Access Level            | Key Functionality              |
+| ----------------------- | ------------------ | ----------------------- | ------------------------------ |
+| `/`                     | Redirect to Login  | Unauthenticated         | Redirects to login page        |
+| `/auth/login`           | Login              | Unauthenticated         | User login                     |
+| `/auth/register`        | Register           | Unauthenticated         | User registration              |
+| `/auth/forgot-password` | Forgot Password    | Unauthenticated         | Request password reset         |
+| `/auth/reset-password`  | Reset Password     | Unauthenticated         | Reset password with token      |
+| `/dashboard`            | User Dashboard     | All Authenticated Users | Role-specific dashboard view   |
+| `/kudos`                | Kudos Wall         | All Authenticated Users | View kudos, filtering, sorting |
+| `/kudos/new`            | Create Kudos       | Admin, SuperAdmin       | Create new kudos               |
+| `/kudos/[id]`           | Single Kudos       | All Authenticated Users | View single kudos details      |
+| `/admin`                | Admin Dashboard    | Admin, SuperAdmin       | User management                |
+| `/admin/users/[id]`     | User Details       | SuperAdmin              | Edit specific user             |
+| `/admin/users/pending`  | Pending Approvals  | SuperAdmin              | Approve/reject users           |
+| `/admin/settings`       | System Settings    | SuperAdmin              | Configure system               |
+| `/analytics`            | Analytics Overview | Admin, SuperAdmin       | View all analytics             |
+| `/analytics/trends`     | Recognition Trends | Admin, SuperAdmin       | View trends and patterns       |
+| `/analytics/keywords`   | Keyword Analysis   | Admin, SuperAdmin       | Analyze message content        |
+| `/profile`              | User Profile       | All Authenticated Users | View user profile              |
+| `/profile/settings`     | Profile Settings   | All Authenticated Users | Update profile                 |
 
 ## Component Hierarchy
 
@@ -289,39 +320,53 @@ src/
       KudosCard/
       UserTable/
       FilterPanel/
+      RoleBasedContent/
     templates/
+      AuthLayout/
       MainLayout/
       DashboardLayout/
-      AuthLayout/
+        SuperAdminDashboard/
+        AdminDashboard/
+        UserDashboard/
     pages/
-      Home/
-      KudosNew/
-      KudosDetail/
-      Login/
-      Register/
-      ForgotPassword/
-      ResetPassword/
-      AdminDashboard/
-      UserManagement/
-      UserDetail/
-      PendingApprovals/
-      Settings/
+      Auth/
+        Login/
+        Register/
+        ForgotPassword/
+        ResetPassword/
+      Dashboard/
+      Kudos/
+        KudosWall/
+        KudosNew/
+        KudosDetail/
+      Admin/
+        UserManagement/
+        UserDetail/
+        PendingApprovals/
+        Settings/
       Analytics/
-      Trends/
-      Keywords/
+        Overview/
+        Trends/
+        Keywords/
       Profile/
+        UserProfile/
+        ProfileSettings/
 ```
 
 ## Milestone Summary
 
-| Milestone           | Target Date    | Deliverables                           |
-| ------------------- | -------------- | -------------------------------------- |
-| Project Setup       | End of Week 1  | Repository, documentation, environment |
-| Core Architecture   | End of Week 3  | Component library and layouts          |
-| Feature Complete    | End of Week 6  | All core frontend features             |
-| Analytics Dashboard | End of Week 7  | Data visualization and insights        |
-| Testing Complete    | End of Week 10 | Test coverage, bug fixes               |
-| Deployment Ready    | End of Week 11 | Production-ready frontend              |
+| Milestone             | Target Date    | Deliverables                               |
+| --------------------- | -------------- | ------------------------------------------ |
+| Project Setup         | End of Week 1  | Repository, documentation, environment     |
+| Core Architecture     | End of Week 3  | Component library and layouts              |
+| Authentication System | End of Week 4  | Login, registration, role-based navigation |
+| Role-Based Dashboards | End of Week 5  | Dashboard interfaces for each user role    |
+| Kudos Features        | End of Week 7  | All kudos and filtering functionality      |
+| Admin Features        | End of Week 8  | User management and admin tools            |
+| Analytics             | End of Week 9  | Data visualization and insights            |
+| UI/UX Completion      | End of Week 10 | Refined user interface and experience      |
+| Testing Complete      | End of Week 12 | Test coverage, bug fixes                   |
+| Deployment Ready      | End of Week 13 | Production-ready frontend                  |
 
 ## Current Status Indicators
 

@@ -1,0 +1,105 @@
+import { IAuthService } from "../../domain/interfaces/IAuthService";
+import { User } from "../../domain/entities/User";
+import { AuthRepository } from "./AuthRepository";
+import { AuthResponse } from "../../domain/valueObjects/AuthResponse";
+import { IStorageService } from "../../shared/interface/IStorageService";
+
+export class AuthService implements IAuthService {
+  private readonly TOKEN_KEY = "auth_token";
+
+  constructor(
+    private readonly authRepository: AuthRepository,
+    private readonly storageService: IStorageService
+  ) {}
+
+  async register(
+    email: string,
+    password: string,
+    name: string
+  ): Promise<{ message: string }> {
+    try {
+      return await this.authRepository.register(email, password, name);
+    } catch (error) {
+      if (error instanceof Error) {
+        return { message: `Registration failed: ${error.message}` };
+      }
+      return { message: "Registration failed: Unknown error occurred" };
+    }
+  }
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    try {
+      const response = await this.authRepository.login(email, password);
+      // Store the token
+      this.storageService.setItem(this.TOKEN_KEY, response.token);
+      return response;
+    } catch (error) {
+      // Instead of throwing an error, return a failure response with the error message
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+
+      return {
+        token: "",
+        user: null,
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+
+  async logout(): Promise<{ message: string }> {
+    try {
+      this.storageService.removeItem(this.TOKEN_KEY);
+      return await this.authRepository.logout();
+    } catch (error) {
+      if (error instanceof Error) {
+        return { message: `Logout failed: ${error.message}` };
+      }
+      return { message: "Logout failed: Unknown error occurred" };
+    }
+  }
+
+  async resetPasswordRequest(email: string): Promise<{ message: string }> {
+    try {
+      return await this.authRepository.resetPasswordRequest(email);
+    } catch (error) {
+      if (error instanceof Error) {
+        return { message: `Password reset request failed: ${error.message}` };
+      }
+      return {
+        message: "Password reset request failed: Unknown error occurred",
+      };
+    }
+  }
+
+  async resetPassword(
+    token: string,
+    password: string
+  ): Promise<{ message: string }> {
+    try {
+      return await this.authRepository.resetPassword(token, password);
+    } catch (error) {
+      if (error instanceof Error) {
+        return { message: `Password reset failed: ${error.message}` };
+      }
+      return { message: "Password reset failed: Unknown error occurred" };
+    }
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const token = this.storageService.getItem<string>(this.TOKEN_KEY);
+      if (!token) {
+        return null;
+      }
+      return await this.authRepository.getCurrentUser();
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Failed to get current user: ${error.message}`);
+      } else {
+        console.error("Failed to get current user: Unknown error occurred");
+      }
+      return null;
+    }
+  }
+}
