@@ -1,8 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ThumbsUpIcon } from "@/components/atoms/Icons";
-import Avatar from "@/components/atoms/Avatar";
 import Image from "next/image";
+import Avatar from "@/components/atoms/Avatar";
 
 type KudosCardProps = {
   recipientName: string;
@@ -105,7 +104,6 @@ const KudosCard = ({
         gradientTo: "#A3E635",
         badgeBg: "#F7FEE7",
         badgeText: "#65A30D",
-        icon: <ThumbsUpIcon size={28} />,
         headerText: "WELL DONE"
       }
     );

@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import KudosCard from '@/components/molecules/KudosCard/KudosCard';
 import NoKudosFound from '@/components/molecules/NoKudosFound';
 import KudosLayout from '@/components/templates/KudosLayout';
-import KudosForm from '@/components/organisms/KudosForm';
 import { TeamValue, CategoryValue } from '@/shared/enums';
+import KudosForm from '@/components/organisms/KudosForm/KudosForm';
 
 // Mock data for demonstration
 const mockKudos = [
