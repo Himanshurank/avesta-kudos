@@ -35,8 +35,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       { id: "profile", label: "Profile", icon: "👤" },
     ];
 
-    // SuperAdmin specific tabs
-    if (user.isSuperAdmin()) {
+    // SuperAdmin specific tabs - check for role directly
+    if (user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN")) {
       return [
         ...commonTabs,
         { id: "user-management", label: "User Management", icon: "👥" },
@@ -46,8 +46,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       ];
     }
 
-    // Admin specific tabs
-    if (user.isAdmin()) {
+    // Admin specific tabs - check for role directly
+    if (user.roles && user.roles.some((role) => role.name === "ADMIN")) {
       return [
         ...commonTabs,
         { id: "analytics", label: "Analytics", icon: "📈" },
@@ -73,9 +73,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <div className="p-6 border-b">
           <h2 className="text-xl font-bold text-indigo-600">Digital Kudos</h2>
           <p className="text-xs text-gray-500 mt-1">
-            {user.isSuperAdmin()
+            {user.roles &&
+            user.roles.some((role) => role.name === "SUPER_ADMIN")
               ? "Super Admin"
-              : user.isAdmin()
+              : user.roles && user.roles.some((role) => role.name === "ADMIN")
               ? "Admin"
               : "User"}{" "}
             Portal

@@ -45,7 +45,11 @@ const ApprovalQueuePage = () => {
     }
 
     // If user is not a super admin, redirect to dashboard
-    if (!loading && user && !user.isSuperAdmin()) {
+    if (
+      !loading &&
+      user &&
+      !(user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN"))
+    ) {
       toast.error("You don't have permission to access this page");
       router.push("/dashboard");
     }

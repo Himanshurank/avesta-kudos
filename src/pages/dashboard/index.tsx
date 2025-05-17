@@ -31,9 +31,11 @@ const Dashboard = () => {
 
   // Render appropriate dashboard based on user role
   const renderRoleDashboard = () => {
-    if (user.isSuperAdmin()) {
+    // Check if user has SUPER_ADMIN role directly to avoid method call errors
+    if (user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN")) {
       return renderSuperAdminDashboard();
-    } else if (user.isAdmin()) {
+      // Check if user has ADMIN role directly
+    } else if (user.roles && user.roles.some((role) => role.name === "ADMIN")) {
       return renderAdminDashboard();
     } else {
       return renderUserDashboard();
