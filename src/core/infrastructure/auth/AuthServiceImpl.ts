@@ -31,14 +31,15 @@ export class AuthServiceImpl implements IAuthService {
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
       const response = await this.authRepository.login(email, password);
+
       // Store the token
-      this.storageService.setItem(this.TOKEN_KEY, response.token);
+      this.storageService.setItem(this.TOKEN_KEY, response.data.token);
 
       // Store the complete user data if available
-      if (response.user) {
+      if (response.data.user) {
         this.storageService.setItem(
           this.USER_KEY,
-          JSON.stringify(response.user)
+          JSON.stringify(response.data.user)
         );
       }
 
@@ -49,8 +50,7 @@ export class AuthServiceImpl implements IAuthService {
         error instanceof Error ? error.message : "Unknown error occurred";
 
       return {
-        token: "",
-        user: null,
+        data: { token: "", user: null },
         success: false,
         error: errorMessage,
       };

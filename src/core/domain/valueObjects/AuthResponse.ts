@@ -1,8 +1,11 @@
 import { User } from "../entities/User";
 
 export interface AuthResponse {
-  token: string;
-  user: User | null;
+  data: {
+    token: string;
+    user: User | null;
+  };
   success?: boolean;
   error?: string;
+  message?: string;
 }

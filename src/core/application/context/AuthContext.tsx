@@ -69,8 +69,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Success case
-      if (response.user) {
-        setUser(response.user);
+      if (response.data.user) {
+        setUser(response.data.user);
         return true;
       }
 
