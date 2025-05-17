@@ -172,23 +172,6 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
     fetchKudos();
   }, [currentPage, router, initialKudosData]);
 
-  // Filter kudos based on current filters
-  const filteredKudos =
-    kudosData?.data.map(transformKudosForDisplay).filter((kudos) => {
-      const matchesSearch =
-        kudos.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        kudos.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        kudos.createdBy.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesTeam =
-        teamFilter === "All Teams" || kudos.teamName === teamFilter;
-      const matchesCategory =
-        categoryFilter === "All Categories" ||
-        kudos.category === categoryFilter;
-
-      return matchesSearch && matchesTeam && matchesCategory;
-    }) || [];
-
   // Form submission handler
   const handleFormSubmit = (data: typeof formData) => {
     console.log("Form submitted:", data);
@@ -220,7 +203,7 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
       categoryFilter={categoryFilter}
       setCategoryFilter={setCategoryFilter}
       categoryOptions={categories}
-      filteredKudos={filteredKudos}
+      filteredKudos={initialKudosData?.data.map(transformKudosForDisplay) || []}
       isModalOpen={isModalOpen}
       setIsModalOpen={setIsModalOpen}
       formData={formData}

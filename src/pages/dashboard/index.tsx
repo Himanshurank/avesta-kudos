@@ -6,11 +6,70 @@ import DashboardLayout from "@/components/templates/DashboardLayout";
 import UserDashboardTemplate from "@/components/templates/UserDashboardTemplate";
 import AdminDashboardTemplate from "@/components/templates/AdminDashboardTemplate";
 import SuperAdminDashboardTemplate from "@/components/templates/SuperAdminDashboardTemplate";
+import { parseCookies } from "nookies";
+import { GetServerSideProps } from "next";
+import { createKudosServices } from "@/core/shared/di/kudos";
+import { PaginatedResult } from "@/core/domain/interfaces/IKudosRepository";
+import { Kudos } from "@/core/domain/entities/Kudos";
 
-/**
- * Dashboard page component that renders the appropriate dashboard based on user role
- */
-const Dashboard = () => {
+const ITEMS_PER_PAGE = 10;
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const cookies = parseCookies(context);
+  const token = cookies.auth_token;
+
+  if (!token) {
+    return {
+      redirect: {
+        destination: "/auth/login",
+        permanent: false,
+      },
+    };
+  }
+
+  try {
+    const { req, res } = context;
+    const serverKudosServices = createKudosServices(token, { req, res });
+
+    const initialKudosData =
+      await serverKudosServices.getAllKudosUseCase.execute({
+        page: 1,
+        limit: ITEMS_PER_PAGE,
+      });
+
+    return {
+      props: {
+        initialKudosData: JSON.parse(JSON.stringify(initialKudosData)),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching kudos on server:", error);
+
+    if (
+      error instanceof Error &&
+      (error.message.includes("Authentication required") ||
+        error.message.includes("UNAUTHORIZED"))
+    ) {
+      return {
+        redirect: {
+          destination: "/auth/login",
+          permanent: false,
+        },
+      };
+    }
+
+    return {
+      props: {
+        initialKudosData: null,
+      },
+    };
+  }
+};
+const Dashboard = ({
+  initialKudosData,
+}: {
+  initialKudosData: PaginatedResult<Kudos> | null;
+}) => {
   const router = useRouter();
   const { user, loading } = useAuthContext();
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -32,9 +91,6 @@ const Dashboard = () => {
     );
   }
 
-  /**
-   * Render the appropriate dashboard template based on user role
-   */
   const renderRoleDashboard = () => {
     // Check if user has SUPER_ADMIN role
     if (user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN")) {
@@ -46,7 +102,12 @@ const Dashboard = () => {
     }
     // Default to User dashboard
     else {
-      return <UserDashboardTemplate user={user} />;
+      return (
+        <UserDashboardTemplate
+          user={user}
+          initialKudosData={initialKudosData}
+        />
+      );
     }
   };
 
