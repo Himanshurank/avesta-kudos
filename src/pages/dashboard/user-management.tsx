@@ -4,18 +4,16 @@ import { useAuth } from "@/core/application/context/AuthContext";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { container } from "@/core/shared/di/container";
-
-// Components
 import DashboardLayout from "@/components/templates/DashboardLayout";
-import AddUserModal, {
-  UserFormData,
-} from "@/components/molecules/AddUserModal";
+
 import UserHeader from "@/components/organisms/UserHeader";
 import UserTable from "@/components/organisms/UserTable";
 import PaginationControls from "@/components/organisms/PaginationControls";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
+import AddUserModal, {
+  UserFormData,
+} from "@/components/molecules/AddUserModal";
 
-// Types
 interface User {
   id: number;
   name: string;
