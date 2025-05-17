@@ -28,40 +28,33 @@ const Button = (props: ButtonProps) => {
   const getVariantClasses = () => {
     switch (variant) {
       case "primary":
-        return "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500";
+        return "btn-primary";
       case "secondary":
-        return "bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500";
+        return "btn-secondary";
       case "outline":
-        return "bg-transparent border border-indigo-600 text-indigo-600 hover:bg-indigo-50 focus:ring-indigo-500";
+        return "btn-outline";
       default:
-        return "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500";
+        return "btn-primary";
     }
   };
 
   const getSizeClasses = () => {
     switch (size) {
       case "sm":
-        return "text-sm py-2 px-3";
+        return "btn-sm";
       case "md":
-        return "text-base py-2 px-4";
+        return "btn-md";
       case "lg":
-        return "text-lg py-3 px-6";
+        return "btn-lg";
       default:
-        return "text-base py-2 px-4";
+        return "btn-md";
     }
   };
 
   return (
     <button
       type={type}
-      className={`
-        ${getVariantClasses()}
-        ${getSizeClasses()}
-        ${fullWidth ? "w-full" : ""}
-        rounded-md font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2
-        transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-        ${className}
-      `}
+      className={`btn ${getVariantClasses()} ${getSizeClasses()} ${fullWidth ? "w-full" : ""} ${className}`}
       onClick={onClick}
       disabled={disabled}
       data-testid={testId || "button"}

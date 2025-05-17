@@ -1,6 +1,5 @@
 import React from "react";
 import WelcomeCard from "@/components/molecules/WelcomeCard";
-import StatCard from "@/components/molecules/StatCard";
 import RecentActivityCard from "@/components/molecules/RecentActivityCard";
 import DashboardKudosWall from "@/components/organisms/DashboardKudosWall";
 import QuickActionsCard from "@/components/molecules/QuickActionsCard";
@@ -48,36 +47,15 @@ const UserDashboardTemplate = ({
 
   return (
     <div
-      className={`grid grid-cols-1 gap-6 ${className}`}
+      className={`grid grid-cols-1 gap-8 ${className}`}
       data-testid="user-dashboard-template"
     >
       <WelcomeCard userName={user.name} userRole="User" />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          title="Recent Kudos"
-          value={12}
-          icon="🌟"
-          trend="up"
-          percentage={8}
-        />
-        <StatCard
-          title="Kudos Received"
-          value={5}
-          icon="👏"
-          trend="up"
-          percentage={12}
-        />
-        <StatCard
-          title="Top Categories"
-          value={3}
-          icon="🏆"
-          trend="same"
-          percentage={0}
-        />
+      {/* Kudos Wall - Now Featured More Prominently as the Main Dashboard Element */}
+      <div className="mb-2">
+        <DashboardKudosWall kudosData={[]} />
       </div>
-
-      <DashboardKudosWall kudosData={[]} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <RecentActivityCard title="My Activity" activities={recentActivity} />
