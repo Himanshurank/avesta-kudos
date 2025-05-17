@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import Card from '@/components/atoms/Card';
-import Button from '@/components/atoms/Button';
-import Typography from '@/components/atoms/Typography';
-import FormField from '@/components/molecules/FormField';
+import React, { useState } from "react";
+import Card from "@/components/atoms/Card";
+import Button from "@/components/atoms/Button";
+import Typography from "@/components/atoms/Typography";
+import FormField from "@/components/molecules/FormField";
+import CustomDropdown, { DropdownOption } from "@/components/molecules/CustomDropdown";
+import { CATEGORY_LABELS, TEAM_LABELS, TeamValue, CategoryValue } from "@/shared/enums";
+import { ButtonLabels, FormErrors, FormLabels, FormPlaceholders, KudosText } from "@/shared/enums";
+
 
 interface KudosFormData {
   recipientName: string;
-  teamName: string;
-  category: string;
+  teamName: TeamValue;
+  category: CategoryValue;
   message: string;
 }
 
@@ -40,23 +43,17 @@ interface KudosFormProps {
 }
 
 // Category options
-const categoryOptions = [
-  { value: 'teamwork', label: '👥 Teamwork' },
-  { value: 'innovation', label: '💡 Innovation' },
-  { value: 'helping_hand', label: '🤝 Helping Hand' },
-  { value: 'leadership', label: '🏆 Leadership' },
-  { value: 'excellence', label: '⭐ Excellence' },
-];
+const categoryOptions: DropdownOption<CategoryValue>[] = Object.values(CategoryValue).map(value => ({
+  value,
+  label: CATEGORY_LABELS[value],
+  icon: CATEGORY_LABELS[value].split(' ')[0]
+}));
 
 // Team options
-const teamOptions = [
-  { value: 'engineering', label: 'Engineering' },
-  { value: 'design', label: 'Design' },
-  { value: 'product', label: 'Product' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'sales', label: 'Sales' },
-  { value: 'customer_success', label: 'Customer Success' },
-];
+const teamOptions: DropdownOption<TeamValue>[] = Object.values(TeamValue).map(value => ({
+  value,
+  label: TEAM_LABELS[value]
+}));
 
 const KudosForm = (props: KudosFormProps) => {
   const {
@@ -69,13 +66,13 @@ const KudosForm = (props: KudosFormProps) => {
   } = props;
 
   const [formData, setFormData] = useState<KudosFormData>({
-    recipientName: initialData.recipientName || '',
-    teamName: initialData.teamName || '',
-    category: initialData.category || '',
-    message: initialData.message || '',
+    recipientName: initialData.recipientName || "",
+    teamName: initialData.teamName || ("" as TeamValue),
+    category: initialData.category || ("" as CategoryValue),
+    message: initialData.message || "",
   });
 
-  const [errors, setErrors] = useState<Partial<KudosFormData>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof KudosFormData, string>>>({});
   const [messageCount, setMessageCount] = useState(formData.message.length);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -98,30 +95,47 @@ const KudosForm = (props: KudosFormProps) => {
     }
   };
 
+  const handleDropdownChange = (
+    name: "teamName" | "category",
+    value: TeamValue | CategoryValue
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
   const validateForm = (): boolean => {
-    const newErrors: Partial<KudosFormData> = {};
+    const newErrors: Partial<Record<keyof KudosFormData, string>> = {};
     let isValid = true;
 
     if (!formData.recipientName.trim()) {
-      newErrors.recipientName = 'Recipient name is required';
+      newErrors.recipientName = FormErrors.RECIPIENT_NAME_REQUIRED;
       isValid = false;
     }
 
     if (!formData.teamName) {
-      newErrors.teamName = 'Team is required';
+      newErrors.teamName = FormErrors.TEAM_REQUIRED;
       isValid = false;
     }
 
     if (!formData.category) {
-      newErrors.category = 'Category is required';
+      newErrors.category = FormErrors.CATEGORY_REQUIRED;
       isValid = false;
     }
 
     if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
+      newErrors.message = FormErrors.MESSAGE_REQUIRED;
       isValid = false;
     } else if (formData.message.length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
+      newErrors.message = FormErrors.MESSAGE_TOO_SHORT;
       isValid = false;
     }
 
@@ -137,195 +151,139 @@ const KudosForm = (props: KudosFormProps) => {
     }
   };
 
+  // Custom renderer for category options
+  const renderCategoryOption = (option: DropdownOption<CategoryValue>, isSelected: boolean) => (
+    <div
+      className={`px-4 py-2 cursor-pointer hover:bg-indigo-50 flex items-center ${
+        isSelected ? 'bg-indigo-100 text-indigo-800' : 'text-gray-700'
+      }`}
+    >
+      <span className="mr-2 text-lg">{option.icon}</span>
+      <span>{option.label.replace(/^[^ ]+ /, '')}</span>
+    </div>
+  );
+
   return (
     <Card
       className={`overflow-hidden ${className}`}
       testId={testId}
       elevation="md"
     >
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-        <Typography variant="h4" bold color="white">
-          Give Kudos
-        </Typography>
-        <Typography variant="body2" color="white">
-          Recognize someone&apos;s great work and spread positivity
-        </Typography>
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 -mr-16 -mt-16">
+          <div className="absolute w-full h-full rounded-full bg-white opacity-10"></div>
+        </div>
+        <div className="relative">
+          <Typography variant="h4" bold color="white">
+            {KudosText.TITLE}
+          </Typography>
+          <Typography variant="body2" color="white" className="mt-2">
+            {KudosText.SUBTITLE}
+          </Typography>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+        <div>
           <FormField
-            label="Recipient Name"
+            id="recipientName"
+            label={FormLabels.RECIPIENT_NAME}
             name="recipientName"
             value={formData.recipientName}
             onChange={handleChange}
-            placeholder="Who are you recognizing?"
+            placeholder={FormPlaceholders.RECIPIENT_NAME}
             required
             error={errors.recipientName}
             testId={`${testId}-recipient`}
           />
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="mb-4">
-              <label htmlFor="teamName" className="block mb-1 font-medium text-gray-700">
-                <Typography
-                  variant="body2"
-                  className="inline"
-                >
-                  Team <span className="text-red-500">*</span>
-                </Typography>
-              </label>
-              
-              <select
-                id="teamName"
-                name="teamName"
-                value={formData.teamName}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                required
-                data-testid={`${testId}-team`}
-              >
-                <option value="" disabled>
-                  Select a team
-                </option>
-                {teamOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              
-              {errors.teamName && (
-                <Typography variant="caption" color="error" className="mt-1">
-                  {errors.teamName}
-                </Typography>
-              )}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="mb-4">
-              <label htmlFor="category" className="block mb-1 font-medium text-gray-700">
-                <Typography
-                  variant="body2"
-                  className="inline"
-                >
-                  Category <span className="text-red-500">*</span>
-                </Typography>
-              </label>
-              
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                required
-                data-testid={`${testId}-category`}
-              >
-                <option value="" disabled>
-                  Select a category
-                </option>
-                {categoryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              
-              {errors.category && (
-                <Typography variant="caption" color="error" className="mt-1">
-                  {errors.category}
-                </Typography>
-              )}
-            </div>
-          </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="mb-1">
-            <label htmlFor="message" className="block mb-1 font-medium text-gray-700">
-              <Typography
-                variant="body2"
-                className="inline"
-              >
-                Message <span className="text-red-500">*</span>
-              </Typography>
-            </label>
-            
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CustomDropdown
+            id="teamName"
+            name="teamName"
+            label={FormLabels.TEAM}
+            value={formData.teamName}
+            options={teamOptions}
+            onChange={(value) => handleDropdownChange('teamName', value as TeamValue)}
+            placeholder={FormPlaceholders.TEAM}
+            required
+            error={errors.teamName}
+            testId={`${testId}-team`}
+          />
+
+          <CustomDropdown
+            id="category"
+            name="category"
+            label={FormLabels.CATEGORY}
+            value={formData.category}
+            options={categoryOptions}
+            onChange={(value) => handleDropdownChange('category', value as CategoryValue)}
+            placeholder={FormPlaceholders.CATEGORY}
+            required
+            error={errors.category}
+            renderOption={renderCategoryOption}
+            testId={`${testId}-category`}
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="message"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            {FormLabels.MESSAGE} <span className="text-indigo-600">*</span>
+          </label>
+          <div className="relative">
             <textarea
               id="message"
               name="message"
+              rows={6}
               value={formData.message}
               onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-              placeholder="What do you appreciate about them? Be specific about their contribution..."
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-30 transition-all duration-200 outline-none"
+              placeholder={FormPlaceholders.MESSAGE}
               required
+              maxLength={500}
               data-testid={`${testId}-message`}
             />
-            
-            <div className="flex justify-between items-center mt-1">
-              {errors.message ? (
-                <Typography variant="caption" color="error">
-                  {errors.message}
-                </Typography>
-              ) : (
-                <Typography
-                  variant="caption"
-                  color={messageCount > 500 ? 'error' : 'secondary'}
-                >
-                  {messageCount}/500 characters
-                </Typography>
-              )}
+            <div
+              className={`absolute bottom-3 right-3 text-xs px-2 py-1 rounded-full ${
+                messageCount > 400
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+            >
+              {messageCount}/500
             </div>
           </div>
-        </motion.div>
+          {errors.message && (
+            <Typography variant="caption" color="error" className="mt-1">
+              {errors.message}
+            </Typography>
+          )}
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex justify-end gap-4 pt-4 border-t border-gray-100"
-        >
+        <div className="border-t border-gray-100 pt-8 flex justify-end space-x-4">
           {onCancel && (
             <Button
-              type="button"
               variant="outline"
               onClick={onCancel}
-              disabled={isSubmitting}
               testId={`${testId}-cancel`}
             >
-              Cancel
+              {ButtonLabels.CANCEL}
             </Button>
           )}
-          
           <Button
+            variant="primary"
             type="submit"
             disabled={isSubmitting}
             testId={`${testId}-submit`}
+            className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
           >
-            {isSubmitting ? 'Sending...' : 'Send Kudos'}
+            {isSubmitting ? ButtonLabels.SENDING : ButtonLabels.SUBMIT}
           </Button>
-        </motion.div>
+        </div>
       </form>
     </Card>
   );

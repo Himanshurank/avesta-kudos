@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import MainLayout from "@/components/layouts/MainLayout";
+import KudosLayout from "@/components/templates/KudosLayout";
 import Link from "next/link";
 
 export default function NewKudos() {
@@ -10,7 +10,7 @@ export default function NewKudos() {
     category: "",
     message: "",
   });
-
+  const [activeTab, setActiveTab] = useState("new");
   const [messageCount, setMessageCount] = useState(0);
 
   const handleChange = (
@@ -39,37 +39,8 @@ export default function NewKudos() {
   };
 
   return (
-    <MainLayout>
+    <KudosLayout activeTab={activeTab} setActiveTab={setActiveTab}>
       <div className="max-w-3xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex items-center mb-8"
-        >
-          <Link
-            href="/"
-            className="text-indigo-600 hover:text-indigo-700 transition-colors flex items-center group"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2 group-hover:-translate-x-1 transition-transform"
-            >
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back to Kudos Wall
-          </Link>
-        </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -305,6 +276,6 @@ export default function NewKudos() {
           </div>
         </motion.div>
       </div>
-    </MainLayout>
+    </KudosLayout>
   );
 }
