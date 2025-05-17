@@ -40,7 +40,7 @@ interface Pagination {
   totalPages: number;
 }
 
-const UserManagementPage = () => {
+const UserManagementPage: React.FC = () => {
   // Initialize state
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -133,16 +133,14 @@ const UserManagementPage = () => {
   };
 
   // Helper function to convert role name to ID
-  const getRoleId = (roleName: string | number): number => {
+  const getRoleId = (roleName: string | number): number | undefined => {
     switch (roleName) {
-      case "Admin":
-        return 1;
-      case "User":
-        return 2;
       case "Super Admin":
+        return 1;
+      case "Admin":
+        return 2;
+      case "User":
         return 3;
-      default:
-        return 0;
     }
   };
 
@@ -201,13 +199,13 @@ const UserManagementPage = () => {
       const dataToUpdate: Partial<{
         name: string;
         email: string;
-        role: number;
+        roleIds: number;
         status: string;
         password?: string;
       }> = {
         name: userData.name,
         email: userData.email,
-        role: getRoleId(userData.role as string),
+        roleIds: getRoleId(userData.role as string) || 3,
         status: userData.status,
       };
 
@@ -248,7 +246,7 @@ const UserManagementPage = () => {
         email: userData.email,
         password: userData.password,
         name: userData.name,
-        roleIds: getRoleId(userData.role as string),
+        roleIds: getRoleId(userData.role as string) || 3,
       });
 
       // Refresh user list
