@@ -1,44 +1,41 @@
 import React from "react";
-import { UserCircleIcon } from "@heroicons/react/24/outline";
 
 interface StatusBadgeProps {
   status: string;
-  type: "role" | "approval";
+  type?: "role" | "approval";
   className?: string;
 }
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
-  type,
+  type = "role",
   className = "",
 }) => {
-  let colorClasses = "";
-  let icon = null;
+  let bgColor = "bg-green-100";
+  let textColor = "text-green-800";
 
   if (type === "role") {
-    if (status.includes("Admin")) {
-      colorClasses = "bg-indigo-100 text-indigo-800";
-      icon = <UserCircleIcon className="w-3.5 h-3.5 mr-1" />;
-    } else if (status.includes("Super")) {
-      colorClasses = "bg-purple-100 text-purple-800";
+    if (status === "Admin") {
+      bgColor = "bg-indigo-100";
+      textColor = "text-indigo-800";
     } else {
-      colorClasses = "bg-blue-100 text-blue-800";
+      bgColor = "bg-blue-100";
+      textColor = "text-blue-800";
     }
-  } else {
-    if (status === "Approved") {
-      colorClasses = "bg-green-100 text-green-800";
-    } else if (status === "Pending") {
-      colorClasses = "bg-yellow-100 text-yellow-800";
-    } else {
-      colorClasses = "bg-red-100 text-red-800";
+  } else if (type === "approval") {
+    if (status === "Pending") {
+      bgColor = "bg-yellow-100";
+      textColor = "text-yellow-800";
+    } else if (status === "Rejected") {
+      bgColor = "bg-red-100";
+      textColor = "text-red-800";
     }
   }
 
   return (
     <span
-      className={`px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center ${colorClasses} ${className}`}
+      className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor} ${className}`}
     >
-      {icon}
       {status}
     </span>
   );

@@ -3,10 +3,20 @@ import Card from "@/components/atoms/Card";
 import Button from "@/components/atoms/Button";
 import Typography from "@/components/atoms/Typography";
 import FormField from "@/components/molecules/FormField";
-import CustomDropdown, { DropdownOption } from "@/components/molecules/CustomDropdown";
-import { CATEGORY_LABELS, TEAM_LABELS, TeamValue, CategoryValue } from "@/shared/enums";
-import { ButtonLabels, FormErrors, FormLabels, FormPlaceholders, KudosText } from "@/shared/enums";
-
+import CustomDropdown, {
+  DropdownOption,
+} from "@/components/molecules/CustomDropdown";
+import {
+  CATEGORY_LABELS,
+  TEAM_LABELS,
+  TeamValue,
+  CategoryValue,
+  FormErrors,
+  FormLabels,
+  FormPlaceholders,
+  ButtonLabels,
+  KudosText,
+} from "@/shared/enums";
 
 interface KudosFormData {
   recipientName: string;
@@ -43,17 +53,21 @@ interface KudosFormProps {
 }
 
 // Category options
-const categoryOptions: DropdownOption<CategoryValue>[] = Object.values(CategoryValue).map(value => ({
+const categoryOptions: DropdownOption<CategoryValue>[] = Object.values(
+  CategoryValue
+).map((value) => ({
   value,
   label: CATEGORY_LABELS[value],
-  icon: CATEGORY_LABELS[value].split(' ')[0]
+  icon: CATEGORY_LABELS[value].split(" ")[0],
 }));
 
 // Team options
-const teamOptions: DropdownOption<TeamValue>[] = Object.values(TeamValue).map(value => ({
-  value,
-  label: TEAM_LABELS[value]
-}));
+const teamOptions: DropdownOption<TeamValue>[] = Object.values(TeamValue).map(
+  (value) => ({
+    value,
+    label: TEAM_LABELS[value],
+  })
+);
 
 const KudosForm = (props: KudosFormProps) => {
   const {
@@ -61,8 +75,8 @@ const KudosForm = (props: KudosFormProps) => {
     onSubmit,
     onCancel,
     isSubmitting = false,
-    className = '',
-    testId = 'kudos-form',
+    className = "",
+    testId = "kudos-form",
   } = props;
 
   const [formData, setFormData] = useState<KudosFormData>({
@@ -72,12 +86,18 @@ const KudosForm = (props: KudosFormProps) => {
     message: initialData.message || "",
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof KudosFormData, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof KudosFormData, string>>
+  >({});
   const [messageCount, setMessageCount] = useState(formData.message.length);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -90,7 +110,7 @@ const KudosForm = (props: KudosFormProps) => {
       }));
     }
 
-    if (name === 'message') {
+    if (name === "message") {
       setMessageCount(value.length);
     }
   };
@@ -152,14 +172,17 @@ const KudosForm = (props: KudosFormProps) => {
   };
 
   // Custom renderer for category options
-  const renderCategoryOption = (option: DropdownOption<CategoryValue>, isSelected: boolean) => (
+  const renderCategoryOption = (
+    option: DropdownOption<CategoryValue>,
+    isSelected: boolean
+  ) => (
     <div
       className={`px-4 py-2 cursor-pointer hover:bg-indigo-50 flex items-center ${
-        isSelected ? 'bg-indigo-100 text-indigo-800' : 'text-gray-700'
+        isSelected ? "bg-indigo-100 text-indigo-800" : "text-gray-700"
       }`}
     >
       <span className="mr-2 text-lg">{option.icon}</span>
-      <span>{option.label.replace(/^[^ ]+ /, '')}</span>
+      <span>{option.label.replace(/^[^ ]+ /, "")}</span>
     </div>
   );
 
@@ -205,7 +228,9 @@ const KudosForm = (props: KudosFormProps) => {
             label={FormLabels.TEAM}
             value={formData.teamName}
             options={teamOptions}
-            onChange={(value) => handleDropdownChange('teamName', value as TeamValue)}
+            onChange={(value) =>
+              handleDropdownChange("teamName", value as TeamValue)
+            }
             placeholder={FormPlaceholders.TEAM}
             required
             error={errors.teamName}
@@ -218,7 +243,9 @@ const KudosForm = (props: KudosFormProps) => {
             label={FormLabels.CATEGORY}
             value={formData.category}
             options={categoryOptions}
-            onChange={(value) => handleDropdownChange('category', value as CategoryValue)}
+            onChange={(value) =>
+              handleDropdownChange("category", value as CategoryValue)
+            }
             placeholder={FormPlaceholders.CATEGORY}
             required
             error={errors.category}
@@ -289,4 +316,4 @@ const KudosForm = (props: KudosFormProps) => {
   );
 };
 
-export default KudosForm; 
+export default KudosForm;

@@ -281,7 +281,7 @@ const UserManagementPage: React.FC = () => {
   if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <LoadingSpinner size="medium" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
