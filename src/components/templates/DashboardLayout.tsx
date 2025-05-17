@@ -26,17 +26,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
   };
 
-  const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: "📊" },
-    { id: "kudos", label: "Kudos", icon: "👏" },
-    { id: "team", label: "Team", icon: "👥" },
-    { id: "profile", label: "Profile", icon: "👤" },
-  ];
+  // Base tabs for all users
+  const getTabs = () => {
+    // Common tabs for all users
+    const commonTabs = [
+      { id: "dashboard", label: "Dashboard", icon: "📊" },
+      { id: "kudos", label: "Kudos Wall", icon: "👏" },
+      { id: "profile", label: "Profile", icon: "👤" },
+    ];
 
-  // Add admin tab if user is admin
-  if (user.isAdmin()) {
-    tabs.push({ id: "admin", label: "Admin", icon: "⚙️" });
-  }
+    // SuperAdmin specific tabs
+    if (user.isSuperAdmin()) {
+      return [
+        ...commonTabs,
+        { id: "user-management", label: "User Management", icon: "👥" },
+        { id: "approval-queue", label: "Approval Queue", icon: "⏳" },
+        { id: "system-settings", label: "System Settings", icon: "⚙️" },
+        { id: "audit-logs", label: "Audit Logs", icon: "📝" },
+      ];
+    }
+
+    // Admin specific tabs
+    if (user.isAdmin()) {
+      return [
+        ...commonTabs,
+        { id: "analytics", label: "Analytics", icon: "📈" },
+        { id: "manage-teams", label: "Teams", icon: "👥" },
+        { id: "manage-categories", label: "Categories", icon: "🏷️" },
+      ];
+    }
+
+    // Regular user tabs
+    return [
+      ...commonTabs,
+      { id: "my-kudos", label: "My Kudos", icon: "🌟" },
+      { id: "team", label: "My Team", icon: "👥" },
+    ];
+  };
+
+  const tabs = getTabs();
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -44,6 +72,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="w-64 bg-white shadow-md">
         <div className="p-6 border-b">
           <h2 className="text-xl font-bold text-indigo-600">Digital Kudos</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            {user.isSuperAdmin()
+              ? "Super Admin"
+              : user.isAdmin()
+              ? "Admin"
+              : "User"}{" "}
+            Portal
+          </p>
         </div>
 
         {/* Navigation Items */}
@@ -52,7 +88,35 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             {tabs.map((tab) => (
               <li key={tab.id} className="px-4">
                 <button
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    // Handle navigation for different tabs
+                    if (tab.id === "dashboard") {
+                      router.push("/dashboard");
+                    } else if (tab.id === "kudos") {
+                      router.push("/kudos");
+                    } else if (tab.id === "profile") {
+                      router.push("/dashboard/profile");
+                    } else if (tab.id === "my-kudos") {
+                      router.push("/kudos/my-kudos");
+                    } else if (tab.id === "team") {
+                      router.push("/dashboard/team");
+                    } else if (tab.id === "user-management") {
+                      router.push("/dashboard/user-management");
+                    } else if (tab.id === "approval-queue") {
+                      router.push("/dashboard/approval-queue");
+                    } else if (tab.id === "system-settings") {
+                      router.push("/dashboard/system-settings");
+                    } else if (tab.id === "audit-logs") {
+                      router.push("/dashboard/audit-logs");
+                    } else if (tab.id === "analytics") {
+                      router.push("/dashboard/analytics");
+                    } else if (tab.id === "manage-teams") {
+                      router.push("/dashboard/manage-teams");
+                    } else if (tab.id === "manage-categories") {
+                      router.push("/dashboard/manage-categories");
+                    }
+                  }}
                   className={`flex items-center w-full px-4 py-3 my-1 rounded-md transition-colors ${
                     activeTab === tab.id
                       ? "bg-indigo-50 text-indigo-700"
