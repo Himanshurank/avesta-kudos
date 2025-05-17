@@ -115,7 +115,7 @@ const UserDashboardTemplate = ({
 
   return (
     <div
-      className={`grid grid-cols-1 gap-6 ${className}`}
+      className={`grid grid-cols-1 gap-8 ${className}`}
       data-testid="user-dashboard-template"
     >
       <WelcomeCard userName={user.name} userRole="User" />
