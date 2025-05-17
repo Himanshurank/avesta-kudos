@@ -1,60 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import KudosPageTemplate from "@/components/templates/KudosPageTemplate";
 import { TeamValue, CategoryValue } from "@/shared/enums";
-
-// Mock data for demonstration
-const mockKudos = [
-  {
-    id: "1",
-    recipientName: "Sarah Johnson",
-    teamName: "Engineering",
-    category: "Teamwork",
-    message:
-      "Sarah went above and beyond to help our team complete the project ahead of schedule. Her collaborative spirit made all the difference!",
-    createdBy: "Michael Chen",
-    createdAt: "2 days ago",
-  },
-  {
-    id: "2",
-    recipientName: "David Rodriguez",
-    teamName: "Design",
-    category: "Innovation",
-    message:
-      "David's creative solution to our UX challenge completely transformed the user experience. His innovative thinking is truly inspiring.",
-    createdBy: "Priya Patel",
-    createdAt: "3 days ago",
-  },
-  {
-    id: "3",
-    recipientName: "Emily Taylor",
-    teamName: "Product",
-    category: "Helping Hand",
-    message:
-      "Emily stepped in to help our team when we were short-staffed. Her willingness to assist others demonstrates true teamwork.",
-    createdBy: "James Wilson",
-    createdAt: "1 week ago",
-  },
-  {
-    id: "4",
-    recipientName: "Alex Martinez",
-    teamName: "Engineering",
-    category: "Excellence",
-    message:
-      "Alex's attention to detail and commitment to quality resulted in a flawless product launch. His excellence sets a high standard.",
-    createdBy: "Lisa Thompson",
-    createdAt: "1 week ago",
-  },
-  {
-    id: "5",
-    recipientName: "Olivia Kim",
-    teamName: "Marketing",
-    category: "Leadership",
-    message:
-      "Olivia expertly guided our team through a challenging campaign. Her leadership skills and strategic thinking were crucial to our success.",
-    createdBy: "Robert Johnson",
-    createdAt: "2 weeks ago",
-  },
-];
+import { useKudos } from "@/components/hooks/useKudos";
+import { KudosFilter } from "@/core/domain/interfaces/IKudosRepository";
+import { Kudos } from "@/core/domain/entities/Kudos";
 
 // Available filter options
 const teams = [
@@ -76,7 +25,6 @@ const categories = [
 ];
 
 export default function KudosPage() {
-  // State management
   const [searchTerm, setSearchTerm] = useState("");
   const [teamFilter, setTeamFilter] = useState("All Teams");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
@@ -89,17 +37,67 @@ export default function KudosPage() {
     message: "",
   });
 
-  // Filter kudos based on current filters
-  const filteredKudos = mockKudos.filter((kudos) => {
-    const matchesSearch =
-      kudos.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      kudos.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      kudos.createdBy.toLowerCase().includes(searchTerm.toLowerCase());
+  // Setup filter for API call
+  const [apiFilter, setApiFilter] = useState<KudosFilter>({});
+  const { kudos, loading, error, pagination, updateFilter, updatePage } =
+    useKudos(apiFilter);
+
+  // Update API filter when UI filters change
+  useEffect(() => {
+    const newFilter: KudosFilter = {};
+
+    // Add search filter
+    if (searchTerm) {
+      newFilter.search = searchTerm;
+    }
+
+    // Add team filter
+    if (teamFilter !== "All Teams") {
+      // In a real implementation, you would map the team name to an ID
+      const teamMap: Record<string, number> = {
+        Engineering: 1,
+        Design: 2,
+        Product: 3,
+        Marketing: 4,
+        Sales: 5,
+        "Customer Success": 6,
+      };
+      newFilter.teamId = teamMap[teamFilter];
+    }
+
+    // Add category filter
+    if (categoryFilter !== "All Categories") {
+      // In a real implementation, you would map the category name to an ID
+      const categoryMap: Record<string, number> = {
+        Teamwork: 1,
+        Innovation: 2,
+        "Helping Hand": 3,
+        Leadership: 4,
+        Excellence: 5,
+      };
+      newFilter.categoryId = categoryMap[categoryFilter];
+    }
+
+    setApiFilter(newFilter);
+    updateFilter(newFilter);
+  }, [searchTerm, teamFilter, categoryFilter]);
+
+  // Client-side filtering for cases where the API doesn't support certain filters
+  // or for immediate feedback while waiting for API response
+  const filteredKudos = kudos.filter((kudos: Kudos) => {
+    const matchesSearch = searchTerm
+      ? kudos.recipients.some((r) =>
+          r.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ) ||
+        kudos.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        kudos.createdBy.name.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
 
     const matchesTeam =
-      teamFilter === "All Teams" || kudos.teamName === teamFilter;
+      teamFilter === "All Teams" || kudos.team.name === teamFilter;
     const matchesCategory =
-      categoryFilter === "All Categories" || kudos.category === categoryFilter;
+      categoryFilter === "All Categories" ||
+      kudos.category.name === categoryFilter;
 
     return matchesSearch && matchesTeam && matchesCategory;
   });
@@ -115,6 +113,8 @@ export default function KudosPage() {
       message: "",
     });
     setIsModalOpen(false);
+
+    // In a real implementation, you would call the CreateKudosUseCase here
   };
 
   return (
@@ -134,6 +134,10 @@ export default function KudosPage() {
       setIsModalOpen={setIsModalOpen}
       formData={formData}
       onFormSubmit={handleFormSubmit}
+      isLoading={loading}
+      error={error?.message}
+      pagination={pagination}
+      onPageChange={updatePage}
     />
   );
 }
