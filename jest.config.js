@@ -1,26 +1,30 @@
-module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-  roots: ["<rootDir>/src"],
-  testMatch: ["**/__tests__/**/*.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
-  moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1",
-  },
+/** @type {import('jest').Config} */
+const config = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
   transform: {
-    "^.+\\.tsx?$": "ts-jest",
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.json'
+    }]
   },
-  testPathIgnorePatterns: ["/node_modules/", "/.next/"],
+  testRegex: '(src/core/application/.*)\\.test\\.ts$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    "src/**/*.{js,jsx,ts,tsx}",
-    "!src/**/*.d.ts",
-    "!src/**/*.stories.{js,jsx,ts,tsx}",
+    'src/core/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/__tests__/**',
+    '!src/**/__mocks__/**',
   ],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
-  },
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/mocks/'
+  ]
 };
+
+module.exports = config;

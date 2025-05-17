@@ -29,7 +29,10 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
     "@eslint/eslintrc": "^3",
+    "@jest/globals": "^29.7.0",
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^29.5.14",
     "@types/node": "^20",
