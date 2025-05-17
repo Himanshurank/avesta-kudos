@@ -14,20 +14,14 @@ const Header = (props: IHeaderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
-  // Check if user is on auth pages
   const isAuthPage =
     router.pathname === "/auth/login" ||
     router.pathname === "/auth/register" ||
     router.pathname === "/auth/forgot-password" ||
     router.pathname === "/auth/registration-success";
 
-  // In a real app, we would check for authentication here
-  // For demo purposes, we'll consider user as logged in only if not on auth pages
   useEffect(() => {
-    // This is a simplified check - in a real app, you would verify JWT tokens or session
     const checkAuth = () => {
-      // For demo only - in a real app this would check token/session
-      // Setting to false for now based on user request - only login will set this to true
       setIsLoggedIn(false);
     };
 
