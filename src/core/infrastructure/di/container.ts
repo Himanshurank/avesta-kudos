@@ -12,6 +12,7 @@ import { AuthService } from "../auth/AuthService";
 import { LoginUseCase } from "../../application/useCases/auth/LoginUseCase";
 import { RegisterUseCase } from "../../application/useCases/auth/RegisterUseCase";
 import { GetCurrentUserUseCase } from "../../application/useCases/auth/GetCurrentUserUseCase";
+import { ResetPasswordRequestUseCase } from "../../application/useCases/auth/ResetPasswordRequestUseCase";
 
 // Create service instances
 const configService: IConfigService = new ConfigService();
@@ -34,6 +35,9 @@ const authService: IAuthService = new AuthService(
 const loginUseCase = new LoginUseCase(authService);
 const registerUseCase = new RegisterUseCase(authService);
 const getCurrentUserUseCase = new GetCurrentUserUseCase(authService);
+const resetPasswordRequestUseCase = new ResetPasswordRequestUseCase(
+  authService
+);
 
 export const container = {
   // Services
@@ -49,4 +53,5 @@ export const container = {
   loginUseCase,
   registerUseCase,
   getCurrentUserUseCase,
+  resetPasswordRequestUseCase,
 };

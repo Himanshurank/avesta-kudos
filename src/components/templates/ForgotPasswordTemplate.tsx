@@ -7,18 +7,35 @@ import SuccessMessage from "@/components/molecules/SuccessMessage";
 import DecorativeElements from "@/components/molecules/DecorativeElements";
 
 interface IForgotPasswordTemplateProps {
+  onSubmit?: (email: string) => Promise<boolean>;
+  isLoading?: boolean;
   className?: string;
   testId?: string;
 }
 
 const ForgotPasswordTemplate = (props: IForgotPasswordTemplateProps) => {
-  const { className = "", testId } = props;
+  const { onSubmit, isLoading = false, className = "", testId } = props;
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
 
   const handleSubmitSuccess = (email: string) => {
     setSubmittedEmail(email);
     setIsSubmitted(true);
+  };
+
+  // Handler for form submission that uses the onSubmit prop if provided
+  const handleSubmit = async (email: string) => {
+    if (onSubmit) {
+      const success = await onSubmit(email);
+      if (success) {
+        handleSubmitSuccess(email);
+      }
+      return success;
+    }
+
+    // Default behavior if no onSubmit is provided
+    handleSubmitSuccess(email);
+    return true;
   };
 
   return (
@@ -55,7 +72,10 @@ const ForgotPasswordTemplate = (props: IForgotPasswordTemplateProps) => {
             {isSubmitted ? (
               <SuccessMessage email={submittedEmail} />
             ) : (
-              <ForgotPasswordForm onSubmitSuccess={handleSubmitSuccess} />
+              <ForgotPasswordForm
+                onSubmitSuccess={handleSubmit}
+                isLoading={isLoading}
+              />
             )}
           </motion.div>
         </Card>

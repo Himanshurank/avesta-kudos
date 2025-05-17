@@ -6,6 +6,7 @@ import { IStorageService } from "../../shared/interface/IStorageService";
 
 export class AuthService implements IAuthService {
   private readonly TOKEN_KEY = "auth_token";
+  private readonly USER_KEY = "user_data";
 
   constructor(
     private readonly authRepository: AuthRepository,
@@ -32,6 +33,15 @@ export class AuthService implements IAuthService {
       const response = await this.authRepository.login(email, password);
       // Store the token
       this.storageService.setItem(this.TOKEN_KEY, response.token);
+
+      // Store the complete user data if available
+      if (response.user) {
+        this.storageService.setItem(
+          this.USER_KEY,
+          JSON.stringify(response.user)
+        );
+      }
+
       return response;
     } catch (error) {
       // Instead of throwing an error, return a failure response with the error message
@@ -49,7 +59,9 @@ export class AuthService implements IAuthService {
 
   async logout(): Promise<{ message: string }> {
     try {
+      // Clear both token and user data
       this.storageService.removeItem(this.TOKEN_KEY);
+      this.storageService.removeItem(this.USER_KEY);
       return await this.authRepository.logout();
     } catch (error) {
       if (error instanceof Error) {
@@ -88,11 +100,45 @@ export class AuthService implements IAuthService {
 
   async getCurrentUser(): Promise<User | null> {
     try {
-      const token = this.storageService.getItem<string>(this.TOKEN_KEY);
+      // First try to get the user from local storage
+      const userData = this.storageService.getItem(this.USER_KEY);
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          // Create a proper User instance from the parsed data
+          if (parsedUser && parsedUser.id) {
+            return new User(
+              parsedUser.id,
+              parsedUser.email,
+              parsedUser.name,
+              parsedUser.roles || [],
+              parsedUser.approvalStatus,
+              parsedUser.createdAt
+                ? new Date(parsedUser.createdAt)
+                : new Date(),
+              parsedUser.updatedAt ? new Date(parsedUser.updatedAt) : new Date()
+            );
+          }
+        } catch (e) {
+          console.error("Error parsing stored user data:", e);
+        }
+      }
+
+      // If no user in storage or parsing failed, check token and fetch from API
+      const token = this.storageService.getItem(this.TOKEN_KEY) as string;
       if (!token) {
         return null;
       }
-      return await this.authRepository.getCurrentUser();
+
+      // Fetch user from API
+      const user = await this.authRepository.getCurrentUser();
+
+      // Update stored user data if successful
+      if (user) {
+        this.storageService.setItem(this.USER_KEY, JSON.stringify(user));
+      }
+
+      return user;
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Failed to get current user: ${error.message}`);

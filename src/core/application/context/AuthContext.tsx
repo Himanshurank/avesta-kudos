@@ -19,6 +19,9 @@ interface AuthContextType {
     password: string,
     name: string
   ) => Promise<{ success: boolean; message: string }>;
+  resetPasswordRequest: (
+    email: string
+  ) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -124,12 +127,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const resetPasswordRequest = async (
+    email: string
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const result = await container.resetPasswordRequestUseCase.execute(email);
+      if (result.success) {
+        toast.success("Password reset link sent to your email!");
+      } else {
+        toast.error(result.message);
+      }
+      return result;
+    } catch (error) {
+      console.error("Password reset request failed:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Password reset request failed. Please try again.";
+      toast.error(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     logout,
     register,
+    resetPasswordRequest,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

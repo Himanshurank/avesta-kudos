@@ -7,16 +7,16 @@ import ErrorMessage from "@/components/molecules/ErrorMessage";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 
 interface IForgotPasswordFormProps {
-  onSubmitSuccess: (email: string) => void;
+  onSubmitSuccess: (email: string) => Promise<boolean> | void;
+  isLoading?: boolean;
   className?: string;
   testId?: string;
 }
 
 const ForgotPasswordForm = (props: IForgotPasswordFormProps) => {
-  const { onSubmitSuccess, className = "", testId } = props;
+  const { onSubmitSuccess, isLoading = false, className = "", testId } = props;
 
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
   const validateForm = () => {
@@ -38,22 +38,11 @@ const ForgotPasswordForm = (props: IForgotPasswordFormProps) => {
     }
 
     try {
-      setIsLoading(true);
       setError(undefined);
-
-      // For demo purposes only - replace with actual API call
-      console.log("Password reset request for:", email);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Call the success callback with the email
-      onSubmitSuccess(email);
+      await onSubmitSuccess(email);
     } catch (err) {
       console.error("Password reset request error:", err);
       setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
