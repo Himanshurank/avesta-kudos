@@ -1,175 +1,222 @@
-import {
-  Kudos,
-  Creator,
-  Recipient,
-  Team,
-  Category,
-  Tag,
-  Media,
-} from "../../domain/entities/Kudos";
+import { Kudos } from "../../domain/entities/Kudos";
 import {
   IKudosRepository,
-  KudosFilter,
   PaginatedResult,
-  Pagination,
+  PaginationParams,
 } from "../../domain/interfaces/IKudosRepository";
+import { BaseRepository } from "../../shared/repositories/BaseRepository";
 
-interface ApiResponse<T> {
+interface ApiKudosResponse<T> {
   success: boolean;
   data: T;
   error?: {
     code: string;
     message: string;
   };
-  pagination?: Pagination;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
-export class KudosRepositoryImpl implements IKudosRepository {
-  private readonly apiBaseUrl: string = "/api";
-  private readonly token: string | null = null;
+interface KudosApiData {
+  id: number;
+  message: string;
+  createdBy: {
+    id: number;
+    name: string;
+  };
+  recipients: Array<{
+    id: number;
+    name: string;
+  }>;
+  team: {
+    id: number;
+    name: string;
+  };
+  category: {
+    id: number;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
-  constructor() {
-    // In a real implementation, we would get the token from a token provider
-    this.token =
-      typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
-  }
+export class KudosRepositoryImpl
+  extends BaseRepository
+  implements IKudosRepository
+{
+  async getAll(params: PaginationParams): Promise<PaginatedResult<Kudos>> {
+    const path = this.getApiPath("kudos").getAll;
 
-  private async fetchApi<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<ApiResponse<T>> {
-    const url = `${this.apiBaseUrl}${endpoint}`;
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
-
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options?.headers,
-      },
+    const response = await this.httpService.get<
+      ApiKudosResponse<KudosApiData[]>
+    >({
+      path,
+      queryParams: params as Record<string, string | number | boolean>,
     });
 
-    const data = await response.json();
-    return data as ApiResponse<T>;
-  }
-
-  async getAll(
-    filter: KudosFilter = {},
-    page: number = 1,
-    limit: number = 10
-  ): Promise<PaginatedResult<Kudos>> {
-    const queryParams = new URLSearchParams();
-
-    // Add page and limit
-    queryParams.append("page", page.toString());
-    queryParams.append("limit", limit.toString());
-
-    // Add filter parameters
-    if (filter.teamId) queryParams.append("teamId", filter.teamId.toString());
-    if (filter.categoryId)
-      queryParams.append("categoryId", filter.categoryId.toString());
-    if (filter.recipientId)
-      queryParams.append("recipientId", filter.recipientId.toString());
-    if (filter.createdById)
-      queryParams.append("createdById", filter.createdById.toString());
-    if (filter.search) queryParams.append("search", filter.search);
-    if (filter.startDate)
-      queryParams.append("startDate", filter.startDate.toISOString());
-    if (filter.endDate)
-      queryParams.append("endDate", filter.endDate.toISOString());
-    if (filter.sort) queryParams.append("sort", filter.sort);
-    if (filter.order) queryParams.append("order", filter.order);
-
-    const response = await this.fetchApi<Kudos[]>(
-      `/kudos?${queryParams.toString()}`
-    );
-
-    if (!response.success) {
-      throw new Error(response.error?.message || "Failed to fetch kudos");
-    }
-
-    const kudos = response.data.map(this.mapResponseToKudos);
-
     return {
-      data: kudos,
-      pagination: response.pagination!,
+      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      pagination: response.pagination || {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: response.data.length,
+        pages: Math.ceil(response.data.length / (params.limit || 10)),
+      },
     };
   }
 
   async getById(id: number): Promise<Kudos | null> {
-    const response = await this.fetchApi<any>(`/kudos/${id}`);
+    try {
+      const path = this.getApiPath("kudos").getById(id);
 
-    if (!response.success) {
-      if (response.error?.code === "NOT_FOUND") {
+      const response = await this.httpService.get<
+        ApiKudosResponse<KudosApiData>
+      >({
+        path,
+      });
+
+      return this.mapKudosResponse(response.data);
+    } catch (error) {
+      if ((error as Error).message.includes("NOT_FOUND")) {
         return null;
       }
-      throw new Error(response.error?.message || "Failed to fetch kudos");
+      throw error;
     }
-
-    return this.mapResponseToKudos(response.data);
   }
 
-  async create(kudosData: Partial<Kudos>): Promise<Kudos> {
-    const payload = {
-      message: kudosData.message,
-      recipientIds: kudosData.recipients?.map((r) => r.id),
-      teamId: kudosData.team?.id,
-      categoryId: kudosData.category?.id,
-      tagIds: kudosData.tags?.map((t) => t.id),
-      mediaIds: kudosData.media?.map((m) => m.id),
-    };
+  async getByTeam(
+    teamId: number,
+    params: PaginationParams
+  ): Promise<PaginatedResult<Kudos>> {
+    const path = `kudos/team/${teamId}`;
 
-    const response = await this.fetchApi<any>("/kudos", {
-      method: "POST",
-      body: JSON.stringify(payload),
+    const response = await this.httpService.get<
+      ApiKudosResponse<KudosApiData[]>
+    >({
+      path,
+      queryParams: params as Record<string, string | number | boolean>,
     });
 
-    if (!response.success) {
-      throw new Error(response.error?.message || "Failed to create kudos");
-    }
-
-    return this.mapResponseToKudos(response.data);
+    return {
+      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      pagination: response.pagination || {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: response.data.length,
+        pages: Math.ceil(response.data.length / (params.limit || 10)),
+      },
+    };
   }
 
-  async update(id: number, kudosData: Partial<Kudos>): Promise<Kudos> {
-    const payload = {
-      message: kudosData.message,
-      recipientIds: kudosData.recipients?.map((r) => r.id),
-      teamId: kudosData.team?.id,
-      categoryId: kudosData.category?.id,
-      tagIds: kudosData.tags?.map((t) => t.id),
-      mediaIds: kudosData.media?.map((m) => m.id),
-    };
+  async getByCategory(
+    categoryId: number,
+    params: PaginationParams
+  ): Promise<PaginatedResult<Kudos>> {
+    const path = `kudos/category/${categoryId}`;
 
-    const response = await this.fetchApi<any>(`/kudos/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
+    const response = await this.httpService.get<
+      ApiKudosResponse<KudosApiData[]>
+    >({
+      path,
+      queryParams: params as Record<string, string | number | boolean>,
     });
 
-    if (!response.success) {
-      throw new Error(response.error?.message || "Failed to update kudos");
-    }
+    return {
+      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      pagination: response.pagination || {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: response.data.length,
+        pages: Math.ceil(response.data.length / (params.limit || 10)),
+      },
+    };
+  }
 
-    return this.mapResponseToKudos(response.data);
+  async getByUser(
+    userId: number,
+    type: "received" | "sent",
+    params: PaginationParams
+  ): Promise<PaginatedResult<Kudos>> {
+    const path = `kudos/user/${userId}`;
+
+    const queryParams = {
+      ...params,
+      type,
+    };
+
+    const response = await this.httpService.get<
+      ApiKudosResponse<KudosApiData[]>
+    >({
+      path,
+      queryParams: queryParams as Record<string, string | number | boolean>,
+    });
+
+    return {
+      data: response.data.map((kudos) => this.mapKudosResponse(kudos)),
+      pagination: response.pagination || {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: response.data.length,
+        pages: Math.ceil(response.data.length / (params.limit || 10)),
+      },
+    };
+  }
+
+  async create(
+    kudos: Omit<Kudos, "id" | "createdAt" | "updatedAt">
+  ): Promise<Kudos> {
+    const path = this.getApiPath("kudos").create;
+
+    const body = {
+      message: kudos.message,
+      recipientIds: kudos.recipients.map((r) => r.id),
+      teamId: kudos.team.id,
+      categoryId: kudos.category.id,
+    };
+
+    const response = await this.httpService.post<
+      ApiKudosResponse<KudosApiData>
+    >({
+      path,
+      body: body as Record<string, unknown>,
+    });
+
+    return this.mapKudosResponse(response.data);
+  }
+
+  async update(id: number, kudos: Partial<Kudos>): Promise<Kudos> {
+    const path = this.getApiPath("kudos").update(id);
+
+    const body: Record<string, unknown> = {};
+
+    if (kudos.message) body.message = kudos.message;
+    if (kudos.recipients) body.recipientIds = kudos.recipients.map((r) => r.id);
+    if (kudos.team) body.teamId = kudos.team.id;
+    if (kudos.category) body.categoryId = kudos.category.id;
+
+    const response = await this.httpService.put<ApiKudosResponse<KudosApiData>>(
+      {
+        path,
+        body,
+      }
+    );
+
+    return this.mapKudosResponse(response.data);
   }
 
   async delete(id: number): Promise<void> {
-    const response = await this.fetchApi<any>(`/kudos/${id}`, {
-      method: "DELETE",
-    });
+    const path = this.getApiPath("kudos").delete(id);
 
-    if (!response.success) {
-      throw new Error(response.error?.message || "Failed to delete kudos");
-    }
+    await this.httpService.delete<ApiKudosResponse<{ message: string }>>({
+      path,
+    });
   }
 
-  private mapResponseToKudos(data: any): Kudos {
+  private mapKudosResponse(data: KudosApiData): Kudos {
     return new Kudos(
       data.id,
       data.message,
@@ -177,8 +224,6 @@ export class KudosRepositoryImpl implements IKudosRepository {
       data.recipients,
       data.team,
       data.category,
-      data.tags || [],
-      data.media || [],
       new Date(data.createdAt),
       new Date(data.updatedAt)
     );

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import UserDashboardTemplate from "@/components/templates/UserDashboardTemplate";
@@ -12,7 +12,7 @@ import SuperAdminDashboardTemplate from "@/components/templates/SuperAdminDashbo
  */
 const Dashboard = () => {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuthContext();
   const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {

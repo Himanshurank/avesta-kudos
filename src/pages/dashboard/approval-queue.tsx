@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import ApprovalQueueTemplate from "@/components/templates/ApprovalQueueTemplate";
@@ -18,7 +18,7 @@ interface PendingUser {
 
 const ApprovalQueuePage = () => {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuthContext();
   const [activeTab, setActiveTab] = useState("approval-queue");
 
   // Mock data for pending users

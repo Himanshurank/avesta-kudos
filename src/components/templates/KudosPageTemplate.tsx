@@ -5,10 +5,6 @@ import KudosGrid from "@/components/organisms/KudosGrid";
 import KudosModal from "@/components/organisms/KudosModal";
 import GiveKudosButton from "@/components/atoms/GiveKudosButton/GiveKudosButton";
 import { TeamValue, CategoryValue } from "@/shared/enums";
-import { Pagination } from "@/core/domain/interfaces/IKudosRepository";
-import Spinner from "@/components/atoms/Spinner/Spinner";
-import ErrorMessage from "@/components/molecules/ErrorMessage/ErrorMessage";
-import Paginator from "@/components/molecules/Paginator/Paginator";
 
 interface IKudos {
   id: string;
@@ -27,6 +23,13 @@ interface IFormData {
   message: string;
 }
 
+interface IPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 interface IProps {
   // Tabs state
   activeTab: string;
@@ -43,7 +46,7 @@ interface IProps {
   categoryOptions: string[];
 
   // Kudos data
-  filteredKudos: any[]; // Changed to accept both old and new format
+  filteredKudos: IKudos[];
 
   // Modal state
   isModalOpen: boolean;
@@ -51,11 +54,12 @@ interface IProps {
   formData: IFormData;
   onFormSubmit: (data: IFormData) => void;
 
-  // Added props for API integration
-  isLoading?: boolean;
-  error?: string;
-  pagination?: Pagination | null;
+  // Pagination
+  pagination?: IPagination;
   onPageChange?: (page: number) => void;
+
+  // Loading state
+  isLoading?: boolean;
 
   className?: string;
   testId?: string;
@@ -78,10 +82,9 @@ const KudosPageTemplate = (props: IProps) => {
     setIsModalOpen,
     formData,
     onFormSubmit,
+    pagination,
+    onPageChange,
     isLoading = false,
-    error = null,
-    pagination = null,
-    onPageChange = () => {},
     className = "",
     testId,
   } = props;
@@ -92,41 +95,57 @@ const KudosPageTemplate = (props: IProps) => {
     setCategoryFilter(categoryOptions[0]);
   };
 
-  // Map new Kudos format to the format expected by KudosGrid
-  const mappedKudos = filteredKudos.map((kudos: any) => {
-    // Check if it's already in the old format
-    if (kudos.recipientName) {
-      return kudos;
-    }
+  const renderPagination = () => {
+    if (!pagination || !onPageChange) return null;
 
-    // Map from new domain entity format to the format KudosGrid expects
-    return {
-      id: kudos.id.toString(),
-      recipientName: kudos.recipients.map((r: any) => r.name).join(", "),
-      teamName: kudos.team.name,
-      category: kudos.category.name,
-      message: kudos.message,
-      createdBy: kudos.createdBy.name,
-      createdAt: formatDate(kudos.createdAt),
-    };
-  });
+    const { page, pages } = pagination;
 
-  // Helper function to format date
-  function formatDate(date: Date | string): string {
-    if (!date) return "";
+    return (
+      <div className="flex justify-center mt-6">
+        <nav className="inline-flex rounded-md shadow">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className={`px-3 py-2 rounded-l-md border border-gray-300 ${
+              page === 1
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Previous
+          </button>
 
-    const d = typeof date === "string" ? new Date(date) : date;
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - d.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          <div className="flex">
+            {[...Array(pages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => onPageChange(i + 1)}
+                className={`px-3 py-2 border border-gray-300 border-l-0 ${
+                  page === i + 1
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
 
-    if (diffDays === 1) return "1 day ago";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 14) return "1 week ago";
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-
-    return d.toLocaleDateString();
-  }
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === pages}
+            className={`px-3 py-2 rounded-r-md border border-gray-300 border-l-0 ${
+              page === pages
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Next
+          </button>
+        </nav>
+      </div>
+    );
+  };
 
   return (
     <KudosLayout activeTab={activeTab} setActiveTab={setActiveTab}>
@@ -147,26 +166,13 @@ const KudosPageTemplate = (props: IProps) => {
         />
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Spinner />
-          </div>
-        ) : error ? (
-          <div className="my-8">
-            <ErrorMessage message={error} />
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         ) : (
           <>
-            <KudosGrid kudos={mappedKudos} />
-
-            {pagination && (
-              <div className="mt-8">
-                <Paginator
-                  currentPage={pagination.page}
-                  totalPages={pagination.pages}
-                  onPageChange={onPageChange}
-                />
-              </div>
-            )}
+            <KudosGrid kudos={filteredKudos} />
+            {renderPagination()}
           </>
         )}
       </main>

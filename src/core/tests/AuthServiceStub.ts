@@ -1,6 +1,6 @@
-import { IAuthService } from "../../core/domain/interfaces/IAuthService";
-import { User } from "../../core/domain/entities/User";
-import { AuthResponse } from "../../core/domain/valueObjects/AuthResponse";
+import { IAuthService } from "../domain/interfaces/IAuthService";
+import { User } from "../domain/entities/User";
+import { AuthResponse } from "../domain/valueObjects/AuthResponse";
 
 /**
  * A stub implementation of IAuthService that also acts as a spy.
@@ -17,22 +17,28 @@ export class AuthServiceStub implements IAuthService {
   getCurrentUserWasCalled = false;
 
   // Parameters passed to methods
-  loginWasCalledWith: { email: string; password: string } = { email: "", password: "" };
-  registerWasCalledWith: { email: string; password: string; name: string } = { 
-    email: "", password: "", name: "" 
+  loginWasCalledWith: { email: string; password: string } = {
+    email: "",
+    password: "",
+  };
+  registerWasCalledWith: { email: string; password: string; name: string } = {
+    email: "",
+    password: "",
+    name: "",
   };
   resetPasswordRequestWasCalledWith: { email: string } = { email: "" };
-  resetPasswordWasCalledWith: { token: string; password: string } = { 
-    token: "", password: "" 
+  resetPasswordWasCalledWith: { token: string; password: string } = {
+    token: "",
+    password: "",
   };
 
   // Return values that tests can configure
   loginReturnValue: AuthResponse = {
     data: {
       token: "",
-      user: null
+      user: null,
     },
-    success: false
+    success: false,
   };
 
   registerReturnValue: { message: string } = { message: "" };
@@ -48,7 +54,11 @@ export class AuthServiceStub implements IAuthService {
     return this.loginReturnValue;
   }
 
-  async register(email: string, password: string, name: string): Promise<{ message: string }> {
+  async register(
+    email: string,
+    password: string,
+    name: string
+  ): Promise<{ message: string }> {
     this.registerWasCalled = true;
     this.registerWasCalledWith = { email, password, name };
     return this.registerReturnValue;
@@ -65,7 +75,10 @@ export class AuthServiceStub implements IAuthService {
     return this.resetPasswordRequestReturnValue;
   }
 
-  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+  async resetPassword(
+    token: string,
+    password: string
+  ): Promise<{ message: string }> {
     this.resetPasswordWasCalled = true;
     this.resetPasswordWasCalledWith = { token, password };
     return this.resetPasswordReturnValue;
@@ -75,4 +88,4 @@ export class AuthServiceStub implements IAuthService {
     this.getCurrentUserWasCalled = true;
     return this.getCurrentUserReturnValue;
   }
-} 
+}

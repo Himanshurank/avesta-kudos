@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { User } from "@/core/domain/entities/User";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   HomeIcon,
@@ -34,7 +34,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
 }) => {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [scrolled, setScrolled] = useState(false);

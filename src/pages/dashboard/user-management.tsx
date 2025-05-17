@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { container } from "@/core/shared/di/container";
@@ -35,7 +35,7 @@ interface Pagination {
 const UserManagementPage: React.FC = () => {
   // Router and auth
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuthContext();
   const [activeTab, setActiveTab] = useState("user-management");
 
   // UI states

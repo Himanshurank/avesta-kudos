@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import AuthLayout from "@/components/templates/AuthLayout";
 import ForgotPasswordTemplate from "@/components/templates/ForgotPasswordTemplate";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 
 const ForgotPasswordPage = () => {
-  const { resetPasswordRequest } = useAuth();
+  const { resetPasswordRequest } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleResetPasswordRequest = async (email: string) => {

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import AuthLayout from "@/components/templates/AuthLayout";
 import LoginTemplate from "@/components/templates/LoginTemplate";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (email: string, password: string) => {

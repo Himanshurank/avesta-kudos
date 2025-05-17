@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import AuthLayout from "@/components/templates/AuthLayout";
 import RegisterTemplate from "@/components/templates/RegisterTemplate";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 
 const RegisterPage = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
-  const { register } = useAuth();
+  const { register } = useAuthContext();
 
   const handleSubmit = async (
     name: string,

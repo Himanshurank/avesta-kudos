@@ -18,11 +18,11 @@ import { ApproveRejectUserUseCase } from "../../application/useCases/user/Approv
 import { AuthRepository } from "../../infrastructure/repositories/AuthRepository";
 import { UserRepository } from "../../infrastructure/repositories/UserRepository";
 import { AuthServiceImpl } from "../../infrastructure/auth/AuthServiceImpl";
-import { StorageService } from "../services/StorageService";
+import { HybridStorageService } from "../services/HybridStorageService";
 
 // Create service instances
 const configService: IConfigService = new ConfigService();
-const storageService: IStorageService = new StorageService();
+const storageService: IStorageService = new HybridStorageService();
 const httpService: IHttpService = new HttpService(
   configService,
   storageService

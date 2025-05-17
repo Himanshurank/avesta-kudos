@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Inter } from "next/font/google";
 import Head from "next/head";
-import { AuthProvider } from "@/core/application/context/AuthContext";
+import { AuthProvider } from "@/components/contexts/AuthContext";
 import { Toaster } from "react-hot-toast";
 
 // If loading a variable font, you don't need to specify the font weight

@@ -374,9 +374,7 @@ Request Body:
   "message": "Thanks for helping with the project!",
   "recipientIds": [2, 3],
   "teamId": 1,
-  "categoryId": 2,
-  "tagIds": [1, 5],
-  "mediaIds": [12]
+  "categoryId": 2
 }
 ```
 
@@ -410,23 +408,6 @@ Response (201 Created):
       "id": 2,
       "name": "Helpful"
     },
-    "tags": [
-      {
-        "id": 1,
-        "name": "collaboration"
-      },
-      {
-        "id": 5,
-        "name": "support"
-      }
-    ],
-    "media": [
-      {
-        "id": 12,
-        "url": "https://example.com/media/12.jpg",
-        "type": "image"
-      }
-    ],
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T12:00:00Z"
   }
@@ -443,15 +424,6 @@ Query Parameters:
 
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
-- `teamId` (optional): Filter by team ID
-- `categoryId` (optional): Filter by category ID
-- `recipientId` (optional): Filter by recipient user ID
-- `createdById` (optional): Filter by creator user ID
-- `search` (optional): Search in message content
-- `startDate` (optional): Filter by date range start
-- `endDate` (optional): Filter by date range end
-- `sort` (optional): Sort field (default: "createdAt")
-- `order` (optional): Sort order ("asc" or "desc", default: "desc")
 
 Response (200 OK):
 
@@ -525,21 +497,162 @@ Response (200 OK):
       "id": 2,
       "name": "Helpful"
     },
-    "tags": [
-      {
-        "id": 1,
-        "name": "collaboration"
-      }
-    ],
-    "media": [
-      {
-        "id": 12,
-        "url": "https://example.com/media/12.jpg",
-        "type": "image"
-      }
-    ],
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T12:00:00Z"
+  }
+}
+```
+
+#### Get Kudos by Team
+
+```
+GET /kudos/team/:teamId
+```
+
+Query Parameters:
+
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+
+Response (200 OK):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "message": "Thanks for helping with the project!",
+      "createdBy": {
+        "id": 1,
+        "name": "John Doe"
+      },
+      "recipients": [
+        {
+          "id": 2,
+          "name": "Jane Doe"
+        }
+      ],
+      "team": {
+        "id": 1,
+        "name": "Engineering"
+      },
+      "category": {
+        "id": 2,
+        "name": "Helpful"
+      },
+      "createdAt": "2023-04-01T12:00:00Z",
+      "updatedAt": "2023-04-01T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 30,
+    "pages": 3
+  }
+}
+```
+
+#### Get Kudos by Category
+
+```
+GET /kudos/category/:categoryId
+```
+
+Query Parameters:
+
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+
+Response (200 OK):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "message": "Thanks for helping with the project!",
+      "createdBy": {
+        "id": 1,
+        "name": "John Doe"
+      },
+      "recipients": [
+        {
+          "id": 2,
+          "name": "Jane Doe"
+        }
+      ],
+      "team": {
+        "id": 1,
+        "name": "Engineering"
+      },
+      "category": {
+        "id": 2,
+        "name": "Helpful"
+      },
+      "createdAt": "2023-04-01T12:00:00Z",
+      "updatedAt": "2023-04-01T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "pages": 3
+  }
+}
+```
+
+#### Get Kudos by User
+
+```
+GET /kudos/user/:userId
+```
+
+Query Parameters:
+
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `type` (optional): "received" or "sent" (default: "received")
+
+Response (200 OK):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "message": "Thanks for helping with the project!",
+      "createdBy": {
+        "id": 1,
+        "name": "John Doe"
+      },
+      "recipients": [
+        {
+          "id": 2,
+          "name": "Jane Doe"
+        }
+      ],
+      "team": {
+        "id": 1,
+        "name": "Engineering"
+      },
+      "category": {
+        "id": 2,
+        "name": "Helpful"
+      },
+      "createdAt": "2023-04-01T12:00:00Z",
+      "updatedAt": "2023-04-01T12:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 15,
+    "pages": 2
   }
 }
 ```
@@ -557,9 +670,7 @@ Request Body:
   "message": "Updated kudos message",
   "recipientIds": [2, 4],
   "teamId": 1,
-  "categoryId": 3,
-  "tagIds": [1, 3],
-  "mediaIds": [12, 15]
+  "categoryId": 3
 }
 ```
 
@@ -593,28 +704,6 @@ Response (200 OK):
       "id": 3,
       "name": "Exceptional"
     },
-    "tags": [
-      {
-        "id": 1,
-        "name": "collaboration"
-      },
-      {
-        "id": 3,
-        "name": "excellence"
-      }
-    ],
-    "media": [
-      {
-        "id": 12,
-        "url": "https://example.com/media/12.jpg",
-        "type": "image"
-      },
-      {
-        "id": 15,
-        "url": "https://example.com/media/15.gif",
-        "type": "gif"
-      }
-    ],
     "createdAt": "2023-04-01T12:00:00Z",
     "updatedAt": "2023-04-01T13:00:00Z"
   }
@@ -632,89 +721,7 @@ Response (200 OK):
 ```json
 {
   "success": true,
-  "data": {
-    "message": "Kudos deleted successfully"
-  }
-}
-```
-
-#### Advanced Kudos Filtering
-
-```
-POST /kudos/filter
-```
-
-Request Body:
-
-```json
-{
-  "filters": {
-    "teamIds": [1, 2],
-    "categoryIds": [1, 2],
-    "recipientIds": [2, 3],
-    "createdByIds": [1, 4],
-    "dateRange": {
-      "start": "2023-01-01T00:00:00Z",
-      "end": "2023-12-31T23:59:59Z"
-    },
-    "tagIds": [1, 3, 5],
-    "keywords": ["helpful", "teamwork", "support"],
-    "messageContains": "project"
-  },
-  "sort": {
-    "field": "createdAt",
-    "order": "desc"
-  },
-  "pagination": {
-    "page": 1,
-    "limit": 20
-  }
-}
-```
-
-Response (200 OK):
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "message": "Thanks for helping with the project!",
-      "createdBy": {
-        "id": 1,
-        "name": "John Doe"
-      },
-      "recipients": [
-        {
-          "id": 2,
-          "name": "Jane Doe"
-        }
-      ],
-      "team": {
-        "id": 1,
-        "name": "Engineering"
-      },
-      "category": {
-        "id": 2,
-        "name": "Helpful"
-      },
-      "tags": [
-        {
-          "id": 1,
-          "name": "collaboration"
-        }
-      ],
-      "createdAt": "2023-04-01T12:00:00Z",
-      "updatedAt": "2023-04-01T12:00:00Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 45,
-    "pages": 3
-  }
+  "message": "Kudos deleted successfully"
 }
 ```
 
@@ -1414,21 +1421,9 @@ The API is versioned in the URL path (/api/v1). Breaking changes will be introdu
     "id": number,
     "name": "string"
   },
-  "media": [
-    {
-      "id": number,
-      "url": "string",
-      "type": "image|gif|video"
-    }
-  ],
-  "tags": [
-    {
-      "id": number,
-      "name": "string"
-    }
-  ],
   "createdAt": "datetime",
-  "updatedAt": "datetime"
+  "updatedAt": "datetime",
+  "deletedAt": "datetime|null"
 }
 ```
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@/core/application/context/AuthContext";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   HomeIcon,
@@ -26,7 +26,7 @@ const KudosLayout: React.FC<KudosLayoutProps> = ({
   children,
 }) => {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthContext();
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const prefersReducedMotion = useReducedMotion();

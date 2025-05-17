@@ -5,8 +5,9 @@ import { AuthResponse } from "../../domain/valueObjects/AuthResponse";
 import { IStorageService } from "../../shared/interface/IStorageService";
 
 export class AuthServiceImpl implements IAuthService {
-  private readonly TOKEN_KEY = "auth_token";
-  private readonly USER_KEY = "user_data";
+  // Using constants for storage keys to ensure consistency
+  private readonly TOKEN_KEY = "auth_token"; // This will be stored in cookies
+  private readonly USER_KEY = "user_data"; // This will be stored in localStorage
 
   constructor(
     private readonly authRepository: AuthRepository,
@@ -100,7 +101,13 @@ export class AuthServiceImpl implements IAuthService {
 
   async getCurrentUser(): Promise<User | null> {
     try {
-      // First try to get the user from local storage
+      // First check if we have a valid token in cookies
+      const token = this.storageService.getItem(this.TOKEN_KEY);
+      if (!token) {
+        return null;
+      }
+
+      // Try to get user from localStorage if available (client-side only)
       const userData = this.storageService.getItem(this.USER_KEY);
       if (userData) {
         try {
@@ -124,16 +131,11 @@ export class AuthServiceImpl implements IAuthService {
         }
       }
 
-      // If no user in storage or parsing failed, check token and fetch from API
-      const token = this.storageService.getItem(this.TOKEN_KEY) as string;
-      if (!token) {
-        return null;
-      }
-
-      // Fetch user from API
+      // If no valid user in localStorage but we have a token, fetch from API
+      // This works on both client and server side
       const user = await this.authRepository.getCurrentUser();
 
-      // Update stored user data if successful
+      // Update stored user data if successful (client-side only)
       if (user) {
         this.storageService.setItem(this.USER_KEY, JSON.stringify(user));
       }

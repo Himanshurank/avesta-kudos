@@ -1,30 +1,19 @@
-export interface Recipient {
+export interface KudosCategory {
   id: number;
   name: string;
 }
 
-export interface Team {
+export interface KudosTeam {
   id: number;
   name: string;
 }
 
-export interface Category {
+export interface KudosRecipient {
   id: number;
   name: string;
 }
 
-export interface Tag {
-  id: number;
-  name: string;
-}
-
-export interface Media {
-  id: number;
-  url: string;
-  type: string;
-}
-
-export interface Creator {
+export interface KudosCreator {
   id: number;
   name: string;
 }
@@ -33,12 +22,10 @@ export class Kudos {
   constructor(
     public readonly id: number,
     public readonly message: string,
-    public readonly createdBy: Creator,
-    public readonly recipients: Recipient[],
-    public readonly team: Team,
-    public readonly category: Category,
-    public readonly tags: Tag[] = [],
-    public readonly media: Media[] = [],
+    public readonly createdBy: KudosCreator,
+    public readonly recipients: KudosRecipient[],
+    public readonly team: KudosTeam,
+    public readonly category: KudosCategory,
     public readonly createdAt: Date,
     public readonly updatedAt: Date
   ) {}

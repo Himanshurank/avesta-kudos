@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import KudosPageTemplate from "@/components/templates/KudosPageTemplate";
 import { TeamValue, CategoryValue } from "@/shared/enums";
-import { useKudos } from "@/components/hooks/useKudos";
-import { KudosFilter } from "@/core/domain/interfaces/IKudosRepository";
+import { kudosServices, createKudosServices } from "@/core/shared/di/kudos";
 import { Kudos } from "@/core/domain/entities/Kudos";
+import { PaginatedResult } from "@/core/domain/interfaces/IKudosRepository";
+import { GetServerSideProps } from "next";
+import { parseCookies } from "nookies";
 
 // Available filter options
 const teams = [
@@ -24,7 +27,30 @@ const categories = [
   "Excellence",
 ];
 
-export default function KudosPage() {
+// Items per page constant
+const ITEMS_PER_PAGE = 10;
+
+// Transform Kudos entity to the format expected by KudosPageTemplate
+const transformKudosForDisplay = (kudos: Kudos) => {
+  return {
+    id: kudos.id.toString(),
+    recipientName: kudos.recipients.map((r) => r.name).join(", "),
+    teamName: kudos.team.name,
+    category: kudos.category.name,
+    message: kudos.message,
+    createdBy: kudos.createdBy.name,
+    createdAt: new Date(kudos.createdAt).toLocaleDateString(),
+  };
+};
+
+interface KudosPageProps {
+  initialKudosData: PaginatedResult<Kudos> | null;
+}
+
+export default function KudosPage({ initialKudosData }: KudosPageProps) {
+  const router = useRouter();
+
+  // State management
   const [searchTerm, setSearchTerm] = useState("");
   const [teamFilter, setTeamFilter] = useState("All Teams");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
@@ -36,71 +62,65 @@ export default function KudosPage() {
     category: "" as CategoryValue,
     message: "",
   });
+  const [kudosData, setKudosData] = useState<PaginatedResult<Kudos> | null>(
+    initialKudosData
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Setup filter for API call
-  const [apiFilter, setApiFilter] = useState<KudosFilter>({});
-  const { kudos, loading, error, pagination, updateFilter, updatePage } =
-    useKudos(apiFilter);
+  // Track current page for pagination
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Update API filter when UI filters change
+  // Fetch kudos from the API when page changes after initial load
   useEffect(() => {
-    const newFilter: KudosFilter = {};
+    // Skip the initial fetch since we already have data from SSR
+    if (currentPage === 1 && initialKudosData) return;
 
-    // Add search filter
-    if (searchTerm) {
-      newFilter.search = searchTerm;
+    async function fetchKudos() {
+      setIsLoading(true);
+      try {
+        const result = await kudosServices.getAllKudosUseCase.execute({
+          page: currentPage,
+          limit: ITEMS_PER_PAGE,
+        });
+        setKudosData(result);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "An error occurred fetching kudos";
+        console.error("Error fetching kudos:", err);
+
+        // Handle authentication error
+        if (
+          errorMessage.includes("Authentication required") ||
+          errorMessage.includes("UNAUTHORIZED")
+        ) {
+          router.push("/auth/login");
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    // Add team filter
-    if (teamFilter !== "All Teams") {
-      // In a real implementation, you would map the team name to an ID
-      const teamMap: Record<string, number> = {
-        Engineering: 1,
-        Design: 2,
-        Product: 3,
-        Marketing: 4,
-        Sales: 5,
-        "Customer Success": 6,
-      };
-      newFilter.teamId = teamMap[teamFilter];
-    }
+    fetchKudos();
+  }, [currentPage, router, initialKudosData]);
 
-    // Add category filter
-    if (categoryFilter !== "All Categories") {
-      // In a real implementation, you would map the category name to an ID
-      const categoryMap: Record<string, number> = {
-        Teamwork: 1,
-        Innovation: 2,
-        "Helping Hand": 3,
-        Leadership: 4,
-        Excellence: 5,
-      };
-      newFilter.categoryId = categoryMap[categoryFilter];
-    }
-
-    setApiFilter(newFilter);
-    updateFilter(newFilter);
-  }, [searchTerm, teamFilter, categoryFilter]);
-
-  // Client-side filtering for cases where the API doesn't support certain filters
-  // or for immediate feedback while waiting for API response
-  const filteredKudos = kudos.filter((kudos: Kudos) => {
-    const matchesSearch = searchTerm
-      ? kudos.recipients.some((r) =>
-          r.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ) ||
+  // Filter kudos based on current filters
+  const filteredKudos =
+    kudosData?.data.map(transformKudosForDisplay).filter((kudos) => {
+      const matchesSearch =
+        kudos.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         kudos.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        kudos.createdBy.name.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
+        kudos.createdBy.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesTeam =
-      teamFilter === "All Teams" || kudos.team.name === teamFilter;
-    const matchesCategory =
-      categoryFilter === "All Categories" ||
-      kudos.category.name === categoryFilter;
+      const matchesTeam =
+        teamFilter === "All Teams" || kudos.teamName === teamFilter;
+      const matchesCategory =
+        categoryFilter === "All Categories" ||
+        kudos.category === categoryFilter;
 
-    return matchesSearch && matchesTeam && matchesCategory;
-  });
+      return matchesSearch && matchesTeam && matchesCategory;
+    }) || [];
 
   // Form submission handler
   const handleFormSubmit = (data: typeof formData) => {
@@ -113,10 +133,14 @@ export default function KudosPage() {
       message: "",
     });
     setIsModalOpen(false);
-
-    // In a real implementation, you would call the CreateKudosUseCase here
   };
 
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Loading state is shown inside the KudosPageTemplate component
   return (
     <KudosPageTemplate
       activeTab={activeTab}
@@ -134,10 +158,86 @@ export default function KudosPage() {
       setIsModalOpen={setIsModalOpen}
       formData={formData}
       onFormSubmit={handleFormSubmit}
-      isLoading={loading}
-      error={error?.message}
-      pagination={pagination}
-      onPageChange={updatePage}
+      pagination={kudosData?.pagination}
+      onPageChange={handlePageChange}
+      isLoading={isLoading}
     />
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  // Get auth token from cookies
+  const cookies = parseCookies(context);
+  const token = cookies.auth_token;
+
+  console.log("Server-side props for kudos page");
+  console.log(
+    "Auth token from cookies:",
+    token ? "Token exists" : "No token found"
+  );
+
+  // If no token, redirect to login
+  if (!token) {
+    console.log("No auth token found, redirecting to login");
+    return {
+      redirect: {
+        destination: "/auth/login",
+        permanent: false,
+      },
+    };
+  }
+
+  try {
+    console.log(
+      "Creating server-side kudos services with token and essential context"
+    );
+    // Extract only req/res that nookies needs
+    const { req, res } = context;
+    // Create a server-side instance of kudos services with the token and minimal context
+    const serverKudosServices = createKudosServices(token, { req, res });
+
+    console.log("Fetching kudos data on server...");
+    // Fetch initial kudos data on the server
+    const initialKudosData =
+      await serverKudosServices.getAllKudosUseCase.execute({
+        page: 1,
+        limit: ITEMS_PER_PAGE,
+      });
+    console.log(
+      `Kudos data fetched successfully: ${initialKudosData.data.length} items`
+    );
+
+    // Serialize the data to ensure it's compatible with Next.js props
+    // This ensures Date objects and complex types are properly handled
+    return {
+      props: {
+        initialKudosData: JSON.parse(JSON.stringify(initialKudosData)),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching kudos on server:", error);
+
+    // If there's an authentication error, redirect to login
+    if (
+      error instanceof Error &&
+      (error.message.includes("Authentication required") ||
+        error.message.includes("UNAUTHORIZED"))
+    ) {
+      console.log("Authentication error, redirecting to login");
+      return {
+        redirect: {
+          destination: "/auth/login",
+          permanent: false,
+        },
+      };
+    }
+
+    // Return null data if there's an error
+    console.log("Returning null data due to error");
+    return {
+      props: {
+        initialKudosData: null,
+      },
+    };
+  }
+};
