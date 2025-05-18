@@ -2,6 +2,13 @@ export interface Role {
   id: number;
   name: string;
 }
+export interface Team {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export class User {
   constructor(
@@ -12,7 +19,7 @@ export class User {
     public readonly approvalStatus: "Pending" | "Approved" | "Rejected",
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly teamName: string
+    public readonly team: Team
   ) {}
 
   isSuperAdmin(): boolean {
@@ -36,6 +43,6 @@ export class User {
   }
 
   getTeamName(): string {
-    return this.teamName;
+    return this.team.name;
   }
 }

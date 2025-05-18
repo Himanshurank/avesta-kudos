@@ -19,7 +19,14 @@ describe("UpdateUserUseCase", () => {
     [{ id: 1, name: "USER" }],
     "Approved",
     new Date(),
-    new Date()
+    new Date(),
+    {
+      id: 1,
+      name: "Team Name",
+      description: "Description",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
   );
 
   beforeEach(() => {
@@ -40,7 +47,8 @@ describe("UpdateUserUseCase", () => {
       originalUser.roles,
       originalUser.approvalStatus,
       originalUser.createdAt,
-      new Date()
+      new Date(),
+      originalUser.team
     );
 
     userRepositoryStub.updateUser = jest.fn().mockImplementation(() => {
@@ -68,14 +76,14 @@ describe("UpdateUserUseCase", () => {
     const updateData = { email: "newemail@example.com" };
     const updatedUser = new User(
       userId,
-      updateData.email,
+      originalUser.email,
       originalUser.name,
       originalUser.roles,
       originalUser.approvalStatus,
       originalUser.createdAt,
-      new Date()
+      new Date(),
+      originalUser.team
     );
-
     userRepositoryStub.updateUser = jest.fn().mockImplementation(() => {
       return Promise.resolve(updatedUser);
     });
@@ -105,14 +113,14 @@ describe("UpdateUserUseCase", () => {
 
     const updatedUser = new User(
       userId,
-      updateData.email,
+      originalUser.email,
       updateData.name,
-      [{ id: 2, name: "ADMIN" }],
+      originalUser.roles,
       originalUser.approvalStatus,
       originalUser.createdAt,
-      new Date()
+      new Date(),
+      originalUser.team
     );
-
     userRepositoryStub.updateUser = jest.fn().mockImplementation(() => {
       return Promise.resolve(updatedUser);
     });

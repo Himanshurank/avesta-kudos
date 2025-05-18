@@ -10,16 +10,21 @@ describe("GetUserByIdUseCase", () => {
   // Test doubles
   let userRepositoryStub: UserRepositoryStub;
 
-  // Test data
-  const userId = 1;
   const mockUser = new User(
-    userId,
-    "test@example.com",
-    "Test User",
+    1,
+    "other@example.com",
+    "Other User",
     [{ id: 1, name: "USER" }],
     "Approved",
     new Date(),
-    new Date()
+    new Date(),
+    {
+      id: 1,
+      name: "Team Name",
+      description: "Description",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
   );
 
   beforeEach(() => {
@@ -37,16 +42,15 @@ describe("GetUserByIdUseCase", () => {
     });
 
     // Act
-    const result = await getUserByIdUseCase.execute(userId);
 
-    // Assert
+    const result = await getUserByIdUseCase.execute(mockUser.id);
     expect(result).toEqual(mockUser);
-    expect(result.id).toBe(userId);
+    expect(result.id).toBe(mockUser.id);
     expect(result.email).toBe(mockUser.email);
     expect(result.name).toBe(mockUser.name);
 
-    // Verify the repository was called with correct parameters
-    expect(userRepositoryStub.getUserById).toHaveBeenCalledWith(userId);
+    // Also update line 45 and 54
+    expect(userRepositoryStub.getUserById).toHaveBeenCalledWith(mockUser.id);
   });
 
   it("should handle different user IDs", async () => {
@@ -59,9 +63,15 @@ describe("GetUserByIdUseCase", () => {
       [{ id: 1, name: "USER" }],
       "Approved",
       new Date(),
-      new Date()
+      new Date(),
+      {
+        id: 1,
+        name: "Team Name",
+        description: "Description",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     );
-
     userRepositoryStub.getUserById = jest.fn().mockImplementation(() => {
       return Promise.resolve(differentUser);
     });

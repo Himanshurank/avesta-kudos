@@ -123,7 +123,10 @@ export class AuthServiceImpl implements IAuthService {
               parsedUser.createdAt
                 ? new Date(parsedUser.createdAt)
                 : new Date(),
-              parsedUser.updatedAt ? new Date(parsedUser.updatedAt) : new Date()
+              parsedUser.updatedAt
+                ? new Date(parsedUser.updatedAt)
+                : new Date(),
+              parsedUser.team
             );
           }
         } catch (e) {

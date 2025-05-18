@@ -111,7 +111,7 @@ export default function NewKudos() {
       ...prev,
       recipientId: value,
       recipientName: selectedUser ? selectedUser.name : "",
-      teamName: userTeam as TeamValue, // Auto-select the team
+      teamName: userTeam,
     }));
 
     // Indicate that a recipient is selected
@@ -119,7 +119,7 @@ export default function NewKudos() {
 
     // Show toast indicating the team was auto-selected
     if (userTeam) {
-      toast.success(`Team ${selectedUser?.teamName} automatically selected`);
+      toast.success(`Team ${selectedUser?.team.name} automatically selected`);
     }
   };
 
@@ -265,7 +265,7 @@ export default function NewKudos() {
                   id="teamName"
                   name="teamName"
                   type="text"
-                  value={selectedUser?.teamName || ""}
+                  value={selectedUser?.team?.name || ""}
                   className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-30 transition-all duration-200 outline-none ${
                     teamDisabled ? "bg-gray-50" : ""
                   }`}

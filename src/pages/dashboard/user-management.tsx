@@ -99,7 +99,7 @@ const UserManagementPage: React.FC = () => {
           createdAt: apiUser.createdAt
             ? new Date(apiUser.createdAt).toISOString().split("T")[0]
             : "Unknown date",
-          team: apiUser.teamName || "",
+          team: apiUser.team?.name || "",
         }));
 
         setUsers(mappedUsers);
@@ -189,7 +189,7 @@ const UserManagementPage: React.FC = () => {
         status: userData.status,
         teamId: Number(userData.team),
       };
-      console.log(dataToUpdate);
+
       if (userData.password.trim()) {
         dataToUpdate.password = userData.password;
       }

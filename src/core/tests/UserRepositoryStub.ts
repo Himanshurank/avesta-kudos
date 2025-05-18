@@ -33,7 +33,14 @@ export class UserRepositoryStub implements IUserRepository {
     [{ id: 1, name: "USER" }],
     "Pending",
     new Date(),
-    new Date()
+    new Date(),
+    {
+      id: 1,
+      name: "Team Name",
+      description: "Description",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
   );
 
   // Stub implementation for approveRejectUserpx

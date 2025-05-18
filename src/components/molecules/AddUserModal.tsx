@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Modal from "../atoms/Modal";
 import Input from "../atoms/Input";
 import toast from "react-hot-toast";
-import { TeamValue, TEAM_LABELS } from "@/shared/enums";
+import { TeamValue } from "@/shared/enums";
 import { container } from "@/core/shared/di/container";
 
 interface AddUserModalProps {
@@ -281,19 +281,15 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             {isLoadingTeams ? (
               <option>Loading teams...</option>
             ) : teams.length > 0 ? (
-              teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))
-            ) : (
-              // Fallback to enum values if API fails
-              Object.entries(TEAM_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))
-            )}
+              <>
+                <option value="">Select team</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </>
+            ) : null}
           </select>
         </div>
 

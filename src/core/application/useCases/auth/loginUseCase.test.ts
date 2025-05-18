@@ -19,14 +19,20 @@ describe("LoginUseCase", () => {
 
   const mockUser = new User(
     1,
-    validEmail,
-    "Test User",
+    "user@example.com", // Instead of newUserData.email
+    "Test User", // Instead of newUserData.name
     [{ id: 1, name: "USER" }],
-    "Approved",
+    "Pending",
     new Date(),
-    new Date()
+    new Date(),
+    {
+      id: 1,
+      name: "Team Name",
+      description: "Description",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
   );
-
   // Success response
   const successResponse: AuthResponse = {
     data: {

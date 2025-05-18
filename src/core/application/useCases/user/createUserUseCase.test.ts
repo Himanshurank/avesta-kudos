@@ -25,7 +25,14 @@ describe("CreateUserUseCase", () => {
     [{ id: 1, name: "USER" }],
     "Pending",
     new Date(),
-    new Date()
+    new Date(),
+    {
+      id: 1,
+      name: "Team Name",
+      description: "Description",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } // Add mock team
   );
 
   beforeEach(() => {
@@ -74,16 +81,23 @@ describe("CreateUserUseCase", () => {
 
   it("should create a user with default approval status", async () => {
     // Arrange
-    const userWithStatus = new User(
+    const mockUser = new User(
       1,
       newUserData.email,
       newUserData.name,
       [{ id: 1, name: "USER" }],
-      "Pending", // Default approval status
+      "Pending",
       new Date(),
-      new Date()
+      new Date(),
+      {
+        id: 1,
+        name: "Team Name",
+        description: "Description",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } // Add mock team
     );
-    userRepositoryStub.createUserReturnValue = userWithStatus;
+    userRepositoryStub.createUserReturnValue = mockUser;
 
     // Act
     const result = await createUserUseCase.execute(newUserData);

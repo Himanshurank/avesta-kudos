@@ -10,7 +10,6 @@ describe("GetAllUsersUseCase", () => {
   // Test doubles
   let userRepositoryStub: UserRepositoryStub;
 
-  // Test data
   const mockUsers = [
     new User(
       1,
@@ -19,7 +18,14 @@ describe("GetAllUsersUseCase", () => {
       [{ id: 1, name: "USER" }],
       "Approved",
       new Date(),
-      new Date()
+      new Date(),
+      {
+        id: 1,
+        name: "Team Name",
+        description: "Description",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     ),
     new User(
       2,
@@ -28,7 +34,14 @@ describe("GetAllUsersUseCase", () => {
       [{ id: 1, name: "USER" }],
       "Pending",
       new Date(),
-      new Date()
+      new Date(),
+      {
+        id: 1,
+        name: "Team Name",
+        description: "Description",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     ),
     new User(
       3,
@@ -37,7 +50,14 @@ describe("GetAllUsersUseCase", () => {
       [{ id: 2, name: "ADMIN" }],
       "Approved",
       new Date(),
-      new Date()
+      new Date(),
+      {
+        id: 1,
+        name: "Team Name",
+        description: "Description",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     ),
   ];
 

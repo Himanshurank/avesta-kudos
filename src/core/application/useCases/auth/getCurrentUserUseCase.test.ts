@@ -10,15 +10,21 @@ describe("GetCurrentUserUseCase", () => {
   // Test doubles
   let authServiceStub: AuthServiceStub;
 
-  // Test data
   const mockUser = new User(
     1,
-    "test@example.com",
-    "Test User",
+    "user@example.com", // Instead of newUserData.email
+    "Test User", // Instead of newUserData.name
     [{ id: 1, name: "USER" }],
-    "Approved",
+    "Pending",
     new Date(),
-    new Date()
+    new Date(),
+    {
+      id: 1,
+      name: "Team Name",
+      description: "Description",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
   );
 
   beforeEach(() => {
