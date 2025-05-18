@@ -1,60 +1,75 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import KudosLayout from "@/components/templates/KudosLayout";
 import KudosCard from "@/components/molecules/KudosCard/KudosCard";
-
 import router from "next/router";
-
-// Mock data for demonstration
-const myReceivedKudos = [
-  {
-    id: "1",
-    recipientName: "You",
-    teamName: "Engineering",
-    category: "Excellence",
-    message:
-      "Your dedication to quality code and attention to detail has greatly improved our product. The refactoring you did last week made the application much more maintainable!",
-    createdBy: "Sarah Johnson",
-    createdAt: "1 week ago",
-  },
-  {
-    id: "2",
-    recipientName: "You",
-    teamName: "Engineering",
-    category: "Teamwork",
-    message:
-      "Thank you for staying late to help me debug that critical issue. Your collaborative spirit and technical expertise saved the day!",
-    createdBy: "David Wilson",
-    createdAt: "2 weeks ago",
-  },
-];
-
-const myGivenKudos = [
-  {
-    id: "3",
-    recipientName: "Emma Davis",
-    teamName: "Design",
-    category: "Innovation",
-    message:
-      "Your redesign of the dashboard is absolutely stunning! The new layout is both beautiful and functional, making complex data easy to understand.",
-    createdBy: "You",
-    createdAt: "3 days ago",
-  },
-  {
-    id: "4",
-    recipientName: "Michael Chen",
-    teamName: "Product",
-    category: "Leadership",
-    message:
-      "Your leadership during the last sprint was exceptional. You kept everyone focused and motivated even when we faced unexpected challenges.",
-    createdBy: "You",
-    createdAt: "1 month ago",
-  },
-];
+import { useAuthContext } from "@/components/contexts/AuthContext";
+import { kudosServices } from "@/core/shared/di/kudos";
+import { Kudos } from "@/core/domain/entities/Kudos";
+import toast from "react-hot-toast";
 
 export default function MyKudosPage() {
   const [activeTab, setActiveTab] = useState("my-kudos");
   const [viewMode, setViewMode] = useState<"received" | "given">("received");
+  const [myReceivedKudos, setMyReceivedKudos] = useState<Kudos[]>([]);
+  const [myGivenKudos, setMyGivenKudos] = useState<Kudos[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const { user } = useAuthContext();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchKudos = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch received kudos
+        const receivedResponse = await kudosServices.getUserKudosUseCase.execute(
+          Number(user.id),
+          "received"
+        );
+        
+        // Fetch given kudos
+        const givenResponse = await kudosServices.getUserKudosUseCase.execute(
+          Number(user.id),
+          "sent"
+        );
+        
+        setMyReceivedKudos(Array.isArray(receivedResponse.data) 
+          ? receivedResponse.data 
+          : [receivedResponse.data as Kudos]);
+        
+        setMyGivenKudos(Array.isArray(givenResponse.data) 
+          ? givenResponse.data 
+          : [givenResponse.data as Kudos]);
+      } catch (err) {
+        console.error("Error fetching kudos:", err);
+        setError("Failed to load your kudos. Please try again.");
+        toast.error("Failed to load your kudos.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchKudos();
+  }, [user, viewMode]);
+
+  const formatDate = (dateString: Date) => {
+    // Simple function to format date as "X days/weeks/months ago"
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return "Today";
+    if (diffInDays === 1) return "Yesterday";
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+    return `${Math.floor(diffInDays / 365)} years ago`;
+  };
 
   return (
     <>
@@ -98,7 +113,33 @@ export default function MyKudosPage() {
 
             <div className="border-b border-gray-200 mb-6"></div>
 
-            {viewMode === "received" ? (
+            {/* Loading state */}
+            {loading && (
+              <div className="text-center py-12">
+                <div className="animate-spin h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading your kudos...</p>
+              </div>
+            )}
+
+            {/* Error state */}
+            {error && !loading && (
+              <div className="text-center py-12 bg-red-50 rounded-lg">
+                <div className="text-6xl mb-4">😟</div>
+                <h3 className="text-xl font-medium text-red-700 mb-2">
+                  Oops, something went wrong
+                </h3>
+                <p className="text-red-500 mb-4">{error}</p>
+                <button
+                  onClick={() => router.reload()}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Successful data load */}
+            {!loading && !error && viewMode === "received" && (
               <>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Kudos Received
@@ -114,11 +155,11 @@ export default function MyKudosPage() {
                       >
                         <KudosCard
                           recipientName="You"
-                          teamName={kudos.teamName}
-                          category={kudos.category}
+                          teamName={kudos.team.name}
+                          category={kudos.category.name}
                           message={kudos.message}
-                          createdBy={kudos.createdBy}
-                          createdAt={kudos.createdAt}
+                          createdBy={kudos.createdBy.name}
+                          createdAt={formatDate(kudos.createdAt)}
                         />
                       </motion.div>
                     ))}
@@ -135,7 +176,9 @@ export default function MyKudosPage() {
                   </div>
                 )}
               </>
-            ) : (
+            )}
+
+            {!loading && !error && viewMode === "given" && (
               <>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Kudos Given
@@ -150,12 +193,12 @@ export default function MyKudosPage() {
                         transition={{ delay: 0.1 * (index + 1) }}
                       >
                         <KudosCard
-                          recipientName={kudos.recipientName}
-                          teamName={kudos.teamName}
-                          category={kudos.category}
+                          recipientName={kudos.recipients[0]?.name || "Unknown Recipient"}
+                          teamName={kudos.team.name}
+                          category={kudos.category.name}
                           message={kudos.message}
                           createdBy="You"
-                          createdAt={kudos.createdAt}
+                          createdAt={formatDate(kudos.createdAt)}
                         />
                       </motion.div>
                     ))}
