@@ -1,6 +1,7 @@
 import { IKudosRepository } from "../../domain/interfaces/IKudosRepository";
 import { KudosRepositoryImpl } from "../../infrastructure/repositories/KudosRepositoryImpl";
 import { GetAllKudosUseCase } from "../../application/useCases/kudos/GetAllKudosUseCase";
+import { FilterKudosUseCase } from "../../application/useCases/kudos/FilterKudosUseCase";
 import { HttpService } from "../services/HttpService";
 import { ConfigService } from "../services/ConfigService";
 import { HybridStorageService } from "../services/HybridStorageService";
@@ -39,10 +40,12 @@ export function createKudosServices(
   );
 
   const getAllKudosUseCase = new GetAllKudosUseCase(kudosRepository);
+  const filterKudosUseCase = new FilterKudosUseCase(kudosRepository);
 
   return {
     kudosRepository,
     getAllKudosUseCase,
+    filterKudosUseCase,
   };
 }
 

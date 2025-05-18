@@ -14,6 +14,7 @@ interface User {
   role: string;
   status: string;
   createdAt: string;
+  team?: string;
 }
 
 interface UserTableRowProps {
@@ -51,6 +52,11 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
         </div>
       </td>
       <td className="py-4 px-4 text-black">{user.email}</td>
+      <td className="py-4 px-4 text-black">
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+          {user.team || "N/A"}
+        </span>
+      </td>
       <td className="py-4 px-4">
         <StatusBadge status={user.role} type="role" />
       </td>

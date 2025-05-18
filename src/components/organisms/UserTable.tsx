@@ -11,6 +11,7 @@ interface User {
   role: string;
   status: string;
   createdAt: string;
+  team?: string;
 }
 
 interface UserTableProps {
@@ -70,6 +71,9 @@ const UserTable: React.FC<UserTableProps> = ({
             Email
           </th>
           <th className="py-3.5 px-4 text-left text-black font-semibold">
+            Team
+          </th>
+          <th className="py-3.5 px-4 text-left text-black font-semibold">
             Role
           </th>
           <th className="py-3.5 px-4 text-left text-black font-semibold">
@@ -98,7 +102,7 @@ const UserTable: React.FC<UserTableProps> = ({
 
         {users.length === 0 && (
           <tr>
-            <td colSpan={6} className="py-8 text-center">
+            <td colSpan={7} className="py-8 text-center">
               <div className="flex flex-col items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
                   <UserGroupIcon className="w-8 h-8 text-slate-400" />

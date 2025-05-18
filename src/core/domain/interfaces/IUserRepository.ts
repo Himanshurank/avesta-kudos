@@ -5,6 +5,7 @@ export interface CreateUserDTO {
   password: string;
   name: string;
   roleIds: number;
+  teamName?: string;
 }
 
 export interface PaginationMeta {
