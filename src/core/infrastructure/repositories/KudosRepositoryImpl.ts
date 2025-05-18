@@ -228,13 +228,18 @@ export class KudosRepositoryImpl
     };
 
     const response = await this.httpService.post<
-      ApiKudosResponse<{ kudos: KudosApiData }>
+      ApiKudosResponse<{ kudos: KudosApiData } | KudosApiData>
     >({
       path,
       body: body as Record<string, unknown>,
     });
 
-    return this.mapKudosResponse(response.data.kudos);
+    // Handle different response formats - some APIs return {kudos: data} and others return data directly
+    const kudosData =
+      "kudos" in response.data
+        ? (response.data as { kudos: KudosApiData }).kudos
+        : (response.data as KudosApiData);
+    return this.mapKudosResponse(kudosData);
   }
 
   async update(id: number, kudos: Partial<Kudos>): Promise<Kudos> {

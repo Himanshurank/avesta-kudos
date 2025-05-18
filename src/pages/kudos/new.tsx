@@ -221,11 +221,11 @@ export default function NewKudos() {
           { id: parseInt(formData.recipientId), name: formData.recipientName },
         ],
         team: {
-          id: Object.values(TeamValue).indexOf(formData.teamName) + 1,
+          id: selectedUser?.team?.id || 1,
           name: formData.teamName,
         },
         category: {
-          id: Object.values(CategoryValue).indexOf(formData.category) + 1,
+          id: categories.find((cat) => cat.name === formData.category)?.id || 1,
           name: formData.category,
         },
         createdBy: {
