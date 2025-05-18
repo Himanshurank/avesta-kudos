@@ -5,16 +5,38 @@ import QuickActionsCard from "@/components/molecules/QuickActionsCard";
 import { User } from "@/core/domain/entities/User";
 import { EyeIcon, StarIcon, UserIcon } from "@heroicons/react/24/outline";
 
-import { Kudos } from "@/core/domain/entities/Kudos";
-import { PaginatedResult } from "@/core/domain/interfaces/IKudosRepository";
-
 import KudosFilterPanel from "../organisms/KudosFilterPanel";
 import KudosGrid from "../organisms/KudosGrid";
+import { GetAllKudosApiResponse } from "@/core/infrastructure/repositories/KudosRepositoryImpl";
+
+// Define the KudosApiData type based on what we see in the repository
+interface KudosApiData {
+  id: number;
+  message: string;
+  createdBy: {
+    id: number;
+    name: string;
+  };
+  recipients: Array<{
+    id: number;
+    name: string;
+  }>;
+  team: {
+    id: number;
+    name: string;
+  };
+  category: {
+    id: number;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface UserDashboardTemplateProps {
   user: User;
   className?: string;
-  initialKudosData: PaginatedResult<Kudos> | null;
+  initialKudosData: GetAllKudosApiResponse | null;
 }
 
 const UserDashboardTemplate = ({
@@ -24,8 +46,8 @@ const UserDashboardTemplate = ({
 }: UserDashboardTemplateProps) => {
   // Add required state variables
   const [searchTerm, setSearchTerm] = useState("");
-  const [teamFilter, setTeamFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [teamFilter, setTeamFilter] = useState("All Teams");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -34,19 +56,10 @@ const UserDashboardTemplate = ({
     return () => clearTimeout(timer);
   }, [searchTerm, teamFilter, categoryFilter]);
 
-  const teamOptions = ["all", "engineering", "design", "product", "marketing"];
-  const categoryOptions = [
-    "all",
-    "helping_hand",
-    "innovative_solution",
-    "team_player",
-    "above_and_beyond",
-  ];
-
   const handleClearAllFilters = () => {
     setSearchTerm("");
-    setTeamFilter("all");
-    setCategoryFilter("all");
+    setTeamFilter("All Teams");
+    setCategoryFilter("All Categories");
   };
 
   // Render pagination controls
@@ -85,7 +98,7 @@ const UserDashboardTemplate = ({
       description: "Manage your personal information",
     },
   ];
-  const transformKudosForDisplay = (kudos: Kudos) => {
+  const transformKudosForDisplay = (kudos: KudosApiData) => {
     // Check if recipients is an array, and if not, handle it gracefully
     let recipientNames = "Unknown";
 
@@ -107,9 +120,7 @@ const UserDashboardTemplate = ({
       category: kudos.category?.name || "Unknown Category",
       message: kudos.message || "",
       createdBy: kudos.createdBy?.name || "Unknown",
-      createdAt: kudos.createdAt
-        ? new Date(kudos.createdAt).toLocaleDateString()
-        : "Unknown date",
+      createdAt: new Date(kudos.createdAt).toLocaleDateString(),
     };
   };
 
@@ -125,10 +136,17 @@ const UserDashboardTemplate = ({
         onSearchChange={setSearchTerm}
         teamFilter={teamFilter}
         onTeamFilterChange={setTeamFilter}
-        teamOptions={teamOptions}
+        teamOptions={[
+          "All Teams",
+          ...(initialKudosData?.teams?.map((team) => team.name) || []),
+        ]}
         categoryFilter={categoryFilter}
         onCategoryFilterChange={setCategoryFilter}
-        categoryOptions={categoryOptions}
+        categoryOptions={[
+          "All Categories",
+          ...(initialKudosData?.categories?.map((category) => category.name) ||
+            []),
+        ]}
         onClearAllFilters={handleClearAllFilters}
       />
 
@@ -139,7 +157,7 @@ const UserDashboardTemplate = ({
       ) : (
         <>
           <KudosGrid
-            kudos={initialKudosData?.data.map(transformKudosForDisplay) || []}
+            kudos={initialKudosData?.kudos?.map(transformKudosForDisplay) || []}
           />
           {renderPagination()}
         </>

@@ -1,4 +1,5 @@
-import { Kudos } from "../../../domain/entities/Kudos";
+import { GetAllKudosApiResponse } from "@/core/infrastructure/repositories/KudosRepositoryImpl";
+
 import {
   IKudosRepository,
   PaginatedResult,
@@ -10,7 +11,7 @@ export class GetAllKudosUseCase {
 
   async execute(
     params: PaginationParams = { page: 1, limit: 10 }
-  ): Promise<PaginatedResult<Kudos>> {
+  ): Promise<PaginatedResult<GetAllKudosApiResponse>> {
     return this.kudosRepository.getAll(params);
   }
 }

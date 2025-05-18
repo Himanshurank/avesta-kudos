@@ -1,3 +1,4 @@
+import { GetAllKudosApiResponse } from "@/core/infrastructure/repositories/KudosRepositoryImpl";
 import { Kudos } from "../entities/Kudos";
 
 export interface PaginationParams {
@@ -6,7 +7,7 @@ export interface PaginationParams {
 }
 
 export interface PaginatedResult<T> {
-  data: T[];
+  data: T | T[];
   pagination: {
     page: number;
     limit: number;
@@ -16,7 +17,9 @@ export interface PaginatedResult<T> {
 }
 
 export interface IKudosRepository {
-  getAll(params: PaginationParams): Promise<PaginatedResult<Kudos>>;
+  getAll(
+    params: PaginationParams
+  ): Promise<PaginatedResult<GetAllKudosApiResponse>>;
   getById(id: number): Promise<Kudos | null>;
   getByTeam(
     teamId: number,

@@ -148,7 +148,11 @@ const KudosPageTemplate = (props: IProps) => {
   };
 
   return (
-    <KudosLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+    <KudosLayout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      onOpenKudosModal={() => setIsModalOpen(true)}
+    >
       <main
         className={`p-6 ${className}`}
         data-testid={testId || "kudos-page-template"}

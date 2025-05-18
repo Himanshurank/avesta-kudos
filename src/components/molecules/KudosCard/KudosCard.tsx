@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Avatar from "@/components/atoms/Avatar";
+import Image from "next/image";
 
 type KudosCardProps = {
   recipientName: string;
@@ -29,122 +29,56 @@ const KudosCard = ({
   createdBy,
   createdAt,
   recipientImage,
+  senderImage,
   className = "",
 }: KudosCardProps) => {
   const getCategoryData = (category: string) => {
     const categoryMap: Record<
       string,
       {
-        color: string;
-        bgColor: string;
-        gradientFrom: string;
-        gradientTo: string;
-        badgeBg: string;
-        badgeText: string;
-        icon: React.ReactNode;
-        headerText: string;
+        primaryColor: string;
+        secondaryColor: string;
+        iconPath: string;
+        emoji: string;
       }
     > = {
       Teamwork: {
-        color: "#FFFFFF",
-        bgColor: "#4B4DB2",
-        gradientFrom: "#4B4DB2",
-        gradientTo: "#6366F1",
-        badgeBg: "#EEF2FF",
-        badgeText: "#4F46E5",
-        icon: (
-          <Image
-            src="/images/group.png"
-            alt="Teamwork"
-            width={56}
-            height={56}
-            className="object-contain"
-          />
-        ),
-        headerText: "GREAT TEAMWORK",
+        primaryColor: "#E6F2FF",
+        secondaryColor: "#95B8D1",
+        iconPath: "/images/group.png",
+        emoji: "🤝",
       },
       Innovation: {
-        color: "#FFFFFF",
-        bgColor: "#E85C41",
-        gradientFrom: "#E85C41",
-        gradientTo: "#F97316",
-        badgeBg: "#FFF7ED",
-        badgeText: "#EA580C",
-        icon: (
-          <Image
-            src="/images/innovation.png"
-            alt="Innovation"
-            width={56}
-            height={56}
-            className="object-contain"
-          />
-        ),
-        headerText: "INNOVATION STAR",
+        primaryColor: "#FFF1E6",
+        secondaryColor: "#F8B195",
+        iconPath: "/images/innovation.png",
+        emoji: "💡",
       },
       "Helping Hand": {
-        color: "#FFFFFF",
-        bgColor: "#D23B68",
-        gradientFrom: "#D23B68",
-        gradientTo: "#EC4899",
-        badgeBg: "#FDF2F8",
-        badgeText: "#DB2777",
-        icon: (
-          <Image
-            src="/images/helping.png"
-            alt="Helping Hand"
-            width={56}
-            height={56}
-            className="object-contain"
-          />
-        ),
-        headerText: "MANY THANKS",
+        primaryColor: "#F8E1F4",
+        secondaryColor: "#DDA0DD",
+        iconPath: "/images/helping.png",
+        emoji: "🙌",
       },
       Leadership: {
-        color: "#FFFFFF",
-        bgColor: "#9C2DA3",
-        gradientFrom: "#9C2DA3",
-        gradientTo: "#C026D3",
-        badgeBg: "#FAF5FF",
-        badgeText: "#A21CAF",
-        icon: (
-          <Image
-            src="/images/group.png"
-            alt="Leadership"
-            width={56}
-            height={56}
-            className="object-contain"
-          />
-        ),
-        headerText: "GREAT LEADERSHIP",
+        primaryColor: "#E6E6FA",
+        secondaryColor: "#B5A8D1",
+        iconPath: "/images/group.png",
+        emoji: "🌟",
       },
       Excellence: {
-        color: "#FFFFFF",
-        bgColor: "#26BBA9",
-        gradientFrom: "#26BBA9",
-        gradientTo: "#14B8A6",
-        badgeBg: "#F0FDFA",
-        badgeText: "#0D9488",
-        icon: (
-          <Image
-            src="/images/mind.png"
-            alt="Excellence"
-            width={56}
-            height={56}
-            className="object-contain"
-          />
-        ),
-        headerText: "EXCELLENT WORK",
+        primaryColor: "#E0F8E9",
+        secondaryColor: "#A8D8B9",
+        iconPath: "/images/mind.png",
+        emoji: "🏆",
       },
     };
     return (
       categoryMap[category] || {
-        color: "#FFFFFF",
-        bgColor: "#A0CE4E",
-        gradientFrom: "#84CC16",
-        gradientTo: "#A3E635",
-        badgeBg: "#F7FEE7",
-        badgeText: "#65A30D",
-        headerText: "WELL DONE",
+        primaryColor: "#F4F9E9",
+        secondaryColor: "#C7DDBC",
+        iconPath: "/images/mind.png",
+        emoji: "✨",
       }
     );
   };
@@ -160,113 +94,212 @@ const KudosCard = ({
       .slice(0, 2);
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const getAvatarBgColor = () => {
+    const colorMap: Record<
+      string,
+      | "primary"
+      | "secondary"
+      | "gray"
+      | "indigo"
+      | "purple"
+      | "green"
+      | "yellow"
+      | "red"
+    > = {
+      Teamwork: "indigo",
+      Innovation: "yellow",
+      "Helping Hand": "purple",
+      Leadership: "primary",
+      Excellence: "green",
+    };
+    return colorMap[category] || "secondary";
+  };
+
   return (
     <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       whileHover={{
-        y: -5,
+        y: -8,
         boxShadow:
-          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+          "0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 10px 10px -5px rgba(0, 0, 0, 0.03)",
+        transition: { duration: 0.3, ease: "easeOut" },
       }}
-      transition={{ duration: 0.3 }}
-      className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 h-full flex flex-col ${className}`}
+      className={`rounded-xl overflow-hidden backdrop-blur-sm ${className} relative`}
       style={{
-        WebkitBackdropFilter: "blur(10px)",
-        backdropFilter: "blur(10px)",
+        background: `linear-gradient(to bottom right, white, ${categoryData.primaryColor}50)`,
+        boxShadow:
+          "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02)",
+        border: `2px solid ${categoryData.secondaryColor}40`,
+        outline: `1px solid ${categoryData.secondaryColor}20`,
+        outlineOffset: "-5px",
       }}
     >
-      {/* Colored Header with Gradient */}
-      <div
-        className="px-5 py-4 text-white relative"
-        style={{
-          background: `linear-gradient(100deg, ${categoryData.gradientFrom}, ${categoryData.gradientTo} 70%, ${categoryData.gradientTo})`,
-        }}
-      >
-        <h3 className="font-bold tracking-wide text-lg">
-          {categoryData.headerText}
-        </h3>
-
-        <div className="absolute top-0 right-0 w-16 h-16 opacity-40">
-          {categoryData.icon}
-        </div>
+      {/* Background Icon */}
+      <div className="absolute right-0 bottom-0 w-40 h-40 overflow-hidden opacity-10 z-0 transform rotate-12">
+        <Image
+          src={categoryData.iconPath}
+          alt="Category icon"
+          width={160}
+          height={160}
+          className="object-contain"
+        />
       </div>
 
-      {/* Content Area */}
-      <div className="flex-grow p-5">
+      {/* Kudos Content with Better Spacing */}
+      <div className="p-6 relative z-10">
         {/* Recipient Info */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative">
-            {recipientImage ? (
-              <Avatar src={recipientImage} alt={recipientName} size="md" />
-            ) : (
-              <Avatar
-                initials={getInitials(recipientName)}
-                size="md"
-                bgColor={category === "Leadership" ? "secondary" : "primary"}
-              />
-            )}
+        <div className="flex items-center gap-4 mb-5">
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.2 }}
+            className="relative"
+          >
             <div
-              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: categoryData.gradientFrom }}
-            >
-              <div className="w-3 h-3 text-white flex items-center justify-center">
-                ★
-              </div>
+              className="absolute inset-0 rounded-full blur-sm opacity-40"
+              style={{ background: categoryData.secondaryColor }}
+            ></div>
+            <Avatar
+              src={recipientImage}
+              alt={recipientName}
+              initials={getInitials(recipientName)}
+              size="lg"
+              bgColor={getAvatarBgColor()}
+              className="relative z-10 ring-2 ring-white"
+            />
+          </motion.div>
+          <div>
+            <h4 className="font-bold text-gray-700 text-lg">{recipientName}</h4>
+            <div className="flex items-center mt-1">
+              <svg
+                className="w-4 h-4 text-gray-400 mr-1"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <p className="text-sm font-medium text-gray-500">{teamName}</p>
             </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {recipientName}
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {teamName} Team
-              </span>
-              <span
-                className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full"
+        </div>
+
+        {/* Category Badge */}
+        <div className="mb-4">
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
+            style={{
+              background: `${categoryData.secondaryColor}40`,
+              border: `1px solid ${categoryData.secondaryColor}60`,
+            }}
+          >
+            <div
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ background: categoryData.secondaryColor }}
+            ></div>
+            <span
+              className="text-xs font-semibold"
+              style={{
+                color: categoryData.secondaryColor,
+                filter: "brightness(0.6)",
+              }}
+            >
+              {category}
+            </span>
+          </motion.div>
+        </div>
+
+        {/* Message with Quote Design */}
+        <div className="my-6">
+          <div
+            className="relative px-5 py-4 rounded-xl"
+            style={{ background: `${categoryData.primaryColor}70` }}
+          >
+            <div
+              className="absolute top-0 left-4 transform -translate-y-1/2 px-2"
+              style={{ color: categoryData.secondaryColor }}
+            >
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.33333 20C8.27111 20 7.38667 19.6364 6.68 18.9091C5.97333 18.1818 5.62667 17.2727 5.62667 16.1818C5.62667 15.6364 5.73333 15.0909 5.94667 14.5455C6.16 14 6.48 13.4091 6.90667 12.7727C7.33333 12.1364 7.88 11.4545 8.54667 10.7273C9.21333 10 10.0267 9.18182 10.9867 8.27273L13.3333 10.4545C12.6667 11.0909 12.08 11.7273 11.5733 12.3636C11.0667 13 10.64 13.6364 10.2933 14.2727C9.94667 14.9091 9.77333 15.5455 9.77333 16.1818C9.77333 16.3636 9.82667 16.5455 9.93333 16.7273C10.04 16.9091 10.2 17 10.4133 17H13.3333C14.3956 17 15.28 17.3712 15.9867 18.1136C16.6933 18.8561 17.0467 19.7727 17.0467 20.8636C17.0467 21.9545 16.6933 22.8712 15.9867 23.6136C15.28 24.3561 14.3956 24.7273 13.3333 24.7273C12.2711 24.7273 11.3867 24.3561 10.68 23.6136C9.97333 22.8712 9.62 21.9545 9.62 20.8636V20H9.33333ZM22.6667 20C21.6044 20 20.72 19.6364 20.0133 18.9091C19.3067 18.1818 18.96 17.2727 18.96 16.1818C18.96 15.6364 19.0667 15.0909 19.28 14.5455C19.4933 14 19.8133 13.4091 20.24 12.7727C20.6667 12.1364 21.2133 11.4545 21.88 10.7273C22.5467 10 23.36 9.18182 24.32 8.27273L26.6667 10.4545C26 11.0909 25.4133 11.7273 24.9067 12.3636C24.4 13 23.9733 13.6364 23.6267 14.2727C23.28 14.9091 23.1067 15.5455 23.1067 16.1818C23.1067 16.3636 23.16 16.5455 23.2667 16.7273C23.3733 16.9091 23.5333 17 23.7467 17H26.6667C27.7289 17 28.6133 17.3712 29.32 18.1136C30.0267 18.8561 30.38 19.7727 30.38 20.8636C30.38 21.9545 30.0267 22.8712 29.32 23.6136C28.6133 24.3561 27.7289 24.7273 26.6667 24.7273C25.6044 24.7273 24.72 24.3561 24.0133 23.6136C23.3067 22.8712 22.96 21.9545 22.96 20.8636V20H22.6667Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <p className="text-gray-600 whitespace-pre-wrap font-medium leading-relaxed">
+              {message}
+            </p>
+          </div>
+        </div>
+
+        {/* Sender Info with Date */}
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+          <div
+            className="text-xs font-medium px-3 py-1 rounded-full"
+            style={{
+              background: `${categoryData.secondaryColor}40`,
+              border: `1px solid ${categoryData.secondaryColor}60`,
+              color: categoryData.secondaryColor,
+              filter: "brightness(0.6)",
+            }}
+          >
+            {formatDate(createdAt)}
+          </div>
+
+          <div className="flex items-center">
+            <div className="text-right mr-3">
+              <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">
+                Recognized by
+              </p>
+              <p
+                className="text-sm font-semibold"
                 style={{
-                  backgroundColor: categoryData.badgeBg,
-                  color: categoryData.badgeText,
+                  color: categoryData.secondaryColor,
+                  filter: "brightness(0.6)",
                 }}
               >
-                {category}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Message Content */}
-        <div className="relative">
-          <div className="absolute -left-2 top-0 text-gray-200 dark:text-gray-700 text-4xl opacity-40">
-            &ldquo;
-          </div>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed pl-3 pr-3 italic">
-            {message}
-          </p>
-          <div className="absolute -right-2 bottom-0 text-gray-200 dark:text-gray-700 text-4xl opacity-40">
-            &rdquo;
-          </div>
-        </div>
-      </div>
-
-      {/* Card Footer */}
-      <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block">
-                From
-              </span>
-              <span
-                className="font-semibold text-sm"
-                style={{ color: categoryData.badgeText }}
-              >
                 {createdBy}
-              </span>
+              </p>
             </div>
+            <motion.div
+              whileHover={{
+                scale: 1.1,
+                rotate: 10,
+              }}
+              transition={{ duration: 0.2 }}
+            >
+              <Avatar
+                src={senderImage}
+                alt={createdBy}
+                initials={getInitials(createdBy)}
+                size="sm"
+                className="relative z-10 ring-2 ring-white"
+              />
+            </motion.div>
           </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-            {createdAt}
-          </span>
         </div>
       </div>
     </motion.div>

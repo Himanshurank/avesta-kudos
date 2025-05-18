@@ -1,17 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import KudosLayout from "@/components/templates/KudosLayout";
 import Link from "next/link";
+import { container } from "@/core/shared/di/container";
+import { User } from "@/core/domain/entities/User";
+import toast from "react-hot-toast";
 
 export default function NewKudos() {
   const [formData, setFormData] = useState({
     recipientName: "",
+    recipientId: "",
     teamName: "",
     category: "",
     message: "",
   });
   const [activeTab, setActiveTab] = useState("new");
   const [messageCount, setMessageCount] = useState(0);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        setLoading(true);
+        const response = await container.getAllUsersUseCase.execute({
+          page: 1,
+          limit: 100,
+          approvalStatus: "Approved",
+        });
+        setUsers(response.users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast.error("Failed to load users. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUsers();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -20,10 +47,19 @@ export default function NewKudos() {
   ) => {
     const { id, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    if (id === "recipientId") {
+      const selectedUser = users.find((user) => user.id.toString() === value);
+      setFormData((prev) => ({
+        ...prev,
+        recipientId: value,
+        recipientName: selectedUser ? selectedUser.name : "",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    }
 
     if (id === "message") {
       setMessageCount(value.length);
@@ -66,25 +102,32 @@ export default function NewKudos() {
               transition={{ delay: 0.2 }}
             >
               <label
-                htmlFor="recipientName"
+                htmlFor="recipientId"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Recipient Name <span className="text-indigo-600">*</span>
+                Recipient <span className="text-indigo-600">*</span>
               </label>
-              <motion.input
+              <motion.select
                 whileFocus={{
                   scale: 1.01,
                   boxShadow: "0 4px 20px -8px rgba(99, 102, 241, 0.3)",
                 }}
                 transition={{ type: "spring", stiffness: 500 }}
-                type="text"
-                id="recipientName"
-                value={formData.recipientName}
+                id="recipientId"
+                value={formData.recipientId}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-30 transition-all duration-200 outline-none"
-                placeholder="Who are you recognizing?"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-30 transition-all duration-200 outline-none appearance-none bg-white"
                 required
-              />
+              >
+                <option value="" disabled>
+                  {loading ? "Loading users..." : "Select a recipient"}
+                </option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id.toString()}>
+                    {user.name}
+                  </option>
+                ))}
+              </motion.select>
             </motion.div>
 
             <motion.div

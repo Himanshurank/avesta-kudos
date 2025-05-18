@@ -3,10 +3,26 @@ import { useRouter } from "next/router";
 import KudosPageTemplate from "@/components/templates/KudosPageTemplate";
 import { TeamValue, CategoryValue } from "@/shared/enums";
 import { kudosServices, createKudosServices } from "@/core/shared/di/kudos";
-import { Kudos } from "@/core/domain/entities/Kudos";
-import { PaginatedResult } from "@/core/domain/interfaces/IKudosRepository";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
+
+// Redefine the API response type to match the actual structure
+interface GetAllKudosApiResponse {
+  kudos: KudosItem[];
+  categories: Array<{ id: number; name: string; description: string }>;
+  teams: Array<{ id: number; name: string; description: string }>;
+}
+
+// Fix the PaginatedResult usage
+interface ApiResponseFormat {
+  data: GetAllKudosApiResponse;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const cookies = parseCookies(context);
@@ -30,7 +46,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         page: 1,
         limit: ITEMS_PER_PAGE,
       });
-    console.log(initialKudosData, "initialKudosData==========================");
 
     return {
       props: {
@@ -60,29 +75,36 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 };
-const teams = [
-  "All Teams",
-  "Engineering",
-  "Design",
-  "Product",
-  "Marketing",
-  "Sales",
-  "Customer Success",
-];
-const categories = [
-  "All Categories",
-  "Teamwork",
-  "Innovation",
-  "Helping Hand",
-  "Leadership",
-  "Excellence",
-];
 
 // Items per page constant
 const ITEMS_PER_PAGE = 10;
 
+// Define a proper type for the kudos item structure
+interface KudosItem {
+  id: number;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    id: number;
+    name: string;
+  };
+  recipients: Array<{
+    id: number;
+    name: string;
+  }>;
+  team: {
+    id: number;
+    name: string;
+  };
+  category: {
+    id: number;
+    name: string;
+  };
+}
+
 // Transform Kudos entity to the format expected by KudosPageTemplate
-const transformKudosForDisplay = (kudos: Kudos) => {
+const transformKudosForDisplay = (kudos: KudosItem) => {
   // Check if recipients is an array, and if not, handle it gracefully
   let recipientNames = "Unknown";
 
@@ -111,7 +133,7 @@ const transformKudosForDisplay = (kudos: Kudos) => {
 };
 
 interface KudosPageProps {
-  initialKudosData: PaginatedResult<Kudos> | null;
+  initialKudosData: ApiResponseFormat | null;
 }
 
 export default function KudosPage({ initialKudosData }: KudosPageProps) {
@@ -129,8 +151,8 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
     category: "" as CategoryValue,
     message: "",
   });
-  const [kudosData, setKudosData] = useState<PaginatedResult<Kudos> | null>(
-    initialKudosData
+  const [kudosData, setKudosData] = useState<ApiResponseFormat | null>(
+    initialKudosData || null
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -149,7 +171,7 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
           page: currentPage,
           limit: ITEMS_PER_PAGE,
         });
-        setKudosData(result);
+        setKudosData(result as unknown as ApiResponseFormat);
       } catch (err) {
         const errorMessage =
           err instanceof Error
@@ -171,6 +193,51 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
 
     fetchKudos();
   }, [currentPage, router, initialKudosData]);
+
+  // Add a useEffect to respond to filter changes
+  useEffect(() => {
+    // Skip on initial render when kudosData is already loaded from SSR
+    if (!kudosData && initialKudosData) return;
+
+    const fetchFilteredKudos = async () => {
+      setIsLoading(true);
+      try {
+        // Prepare parameters for the API call
+        const params: {
+          page: number;
+          limit: number;
+          team?: string;
+          category?: string;
+          search?: string;
+        } = {
+          page: currentPage,
+          limit: ITEMS_PER_PAGE,
+        };
+
+        // Add filter parameters if they're set
+        if (teamFilter !== "All Teams") params.team = teamFilter;
+        if (categoryFilter !== "All Categories")
+          params.category = categoryFilter;
+        if (searchTerm) params.search = searchTerm;
+
+        const result = await kudosServices.getAllKudosUseCase.execute(params);
+
+        // Cast the result to the expected type
+        setKudosData(result as unknown as ApiResponseFormat);
+      } catch (err) {
+        console.error("Error fetching filtered kudos:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Use debounce to prevent too many API calls when typing in search
+    const timeoutId = setTimeout(() => {
+      fetchFilteredKudos();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [teamFilter, categoryFilter, searchTerm, currentPage]);
 
   // Form submission handler
   const handleFormSubmit = (data: typeof formData) => {
@@ -199,11 +266,11 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
       setSearchTerm={setSearchTerm}
       teamFilter={teamFilter}
       setTeamFilter={setTeamFilter}
-      teamOptions={teams}
+      teamOptions={kudosData?.data.teams.map((t) => t.name) || []}
       categoryFilter={categoryFilter}
       setCategoryFilter={setCategoryFilter}
-      categoryOptions={categories}
-      filteredKudos={initialKudosData?.data.map(transformKudosForDisplay) || []}
+      categoryOptions={kudosData?.data.categories.map((c) => c.name) || []}
+      filteredKudos={kudosData?.data.kudos.map(transformKudosForDisplay) || []}
       isModalOpen={isModalOpen}
       setIsModalOpen={setIsModalOpen}
       formData={formData}

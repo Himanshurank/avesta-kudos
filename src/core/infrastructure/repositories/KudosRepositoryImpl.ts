@@ -44,29 +44,45 @@ interface KudosApiData {
   updatedAt: string;
 }
 
+export interface GetAllKudosApiResponse {
+  kudos: KudosApiData[];
+  categories: Array<{
+    id: number;
+    name: string;
+    description: string;
+  }>;
+  teams: Array<{
+    id: number;
+    name: string;
+    description: string;
+  }>;
+}
+
 export class KudosRepositoryImpl
   extends BaseRepository
   implements IKudosRepository
 {
-  async getAll(params: PaginationParams): Promise<PaginatedResult<Kudos>> {
+  async getAll(
+    params: PaginationParams
+  ): Promise<PaginatedResult<GetAllKudosApiResponse>> {
     const path = this.getApiPath("kudos").getAll;
 
     const response = await this.httpService.get<
-      ApiKudosResponse<{ kudos: KudosApiData[] }>
+      ApiKudosResponse<GetAllKudosApiResponse>
     >({
       path,
       queryParams: params as Record<string, string | number | boolean>,
     });
 
-    const kudosData = response.data.kudos || [];
+    const kudosData = response.data;
 
     return {
-      data: kudosData.map((kudos) => this.mapKudosResponse(kudos)),
+      data: kudosData,
       pagination: response.pagination || {
         page: params.page || 1,
         limit: params.limit || 10,
-        total: kudosData.length,
-        pages: Math.ceil(kudosData.length / (params.limit || 10)),
+        total: kudosData.kudos.length,
+        pages: Math.ceil(kudosData.kudos.length / (params.limit || 10)),
       },
     };
   }

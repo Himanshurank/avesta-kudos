@@ -18,12 +18,14 @@ interface KudosLayoutProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   children: React.ReactNode;
+  onOpenKudosModal?: () => void;
 }
 
 const KudosLayout: React.FC<KudosLayoutProps> = ({
   activeTab,
   setActiveTab,
   children,
+  onOpenKudosModal,
 }) => {
   const router = useRouter();
   const { user, logout } = useAuthContext();
@@ -96,7 +98,11 @@ const KudosLayout: React.FC<KudosLayoutProps> = ({
     } else if (tabId === "my-kudos") {
       router.push("/kudos/my-kudos");
     } else if (tabId === "new") {
-      router.push("/kudos/new");
+      if (onOpenKudosModal) {
+        onOpenKudosModal();
+      } else {
+        router.push("/kudos/new");
+      }
     }
   };
 
@@ -353,4 +359,4 @@ const KudosLayout: React.FC<KudosLayoutProps> = ({
   );
 };
 
-export default KudosLayout; 
+export default KudosLayout;

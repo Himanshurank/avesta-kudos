@@ -10,7 +10,7 @@ import { parseCookies } from "nookies";
 import { GetServerSideProps } from "next";
 import { createKudosServices } from "@/core/shared/di/kudos";
 import { PaginatedResult } from "@/core/domain/interfaces/IKudosRepository";
-import { Kudos } from "@/core/domain/entities/Kudos";
+import { GetAllKudosApiResponse } from "@/core/infrastructure/repositories/KudosRepositoryImpl";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -68,7 +68,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 const Dashboard = ({
   initialKudosData,
 }: {
-  initialKudosData: PaginatedResult<Kudos> | null;
+  initialKudosData: PaginatedResult<GetAllKudosApiResponse> | null;
 }) => {
   const router = useRouter();
   const { user, loading } = useAuthContext();
@@ -105,7 +105,7 @@ const Dashboard = ({
       return (
         <UserDashboardTemplate
           user={user}
-          initialKudosData={initialKudosData}
+          initialKudosData={initialKudosData?.data as GetAllKudosApiResponse}
         />
       );
     }
