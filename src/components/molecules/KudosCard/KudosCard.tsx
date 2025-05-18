@@ -266,8 +266,8 @@ const KudosCard = ({
           <div
             className="text-xs font-medium px-3 py-1 rounded-full"
             style={{
-              background: `${categoryData.secondaryColor}40`,
-              border: `1px solid ${categoryData.secondaryColor}60`,
+              background: `${categoryData.secondaryColor}20`,
+              border: `1px solid ${categoryData.secondaryColor}40`,
               color: categoryData.secondaryColor,
               filter: "brightness(0.6)",
             }}
