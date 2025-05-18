@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Typography from '@/components/atoms/Typography';
+import { useAuthContext } from '@/components/contexts/AuthContext';
 
 interface MainLayoutProps {
   /**
@@ -33,6 +34,8 @@ const MainLayout = (props: MainLayoutProps) => {
     showFooter = true,
     testId = 'main-layout',
   } = props;
+  
+  const { isAuthenticated } = useAuthContext();
 
   return (
     <div className="min-h-screen flex flex-col" data-testid={testId}>
@@ -53,7 +56,7 @@ const MainLayout = (props: MainLayoutProps) => {
               </div>
               <nav className="flex space-x-6">
                 <NavLink href="/" label="Home" />
-                <NavLink href="/kudos/new" label="Give Kudos" />
+                {!isAuthenticated && <NavLink href="/kudos/new" label="Give Kudos" />}
               </nav>
               <div className="flex items-center space-x-4">
                 <motion.div

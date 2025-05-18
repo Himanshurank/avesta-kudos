@@ -18,14 +18,12 @@ interface KudosLayoutProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   children: React.ReactNode;
-  onOpenKudosModal?: () => void;
 }
 
 const KudosLayout: React.FC<KudosLayoutProps> = ({
   activeTab,
   setActiveTab,
   children,
-  onOpenKudosModal,
 }) => {
   const router = useRouter();
   const { user, logout } = useAuthContext();
@@ -71,13 +69,6 @@ const KudosLayout: React.FC<KudosLayoutProps> = ({
     }
   };
 
-  // Define tabs for kudos section
-  const tabs = [
-    { id: "kudos", label: "Kudos Wall" },
-    { id: "my-kudos", label: "My Kudos" },
-    { id: "new", label: "Give Kudos" },
-  ];
-
   const getUserRoleText = () => {
     if (!user) return "Guest";
     if (user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN")) {
@@ -89,6 +80,17 @@ const KudosLayout: React.FC<KudosLayoutProps> = ({
     }
   };
 
+  // Define tabs for kudos section
+  const tabs = [
+    { id: "kudos", label: "Kudos Wall" },
+    { id: "my-kudos", label: "My Kudos" },
+  ];
+
+  // Only show Give Kudos tab for Admin and Super Admin roles
+  if (!user || getUserRoleText() !== "User") {
+    tabs.push({ id: "new", label: "Give Kudos" });
+  }
+
   const handleNavigate = (tabId: string) => {
     setActiveTab(tabId);
     if (tabId === "dashboard") {
@@ -98,11 +100,7 @@ const KudosLayout: React.FC<KudosLayoutProps> = ({
     } else if (tabId === "my-kudos") {
       router.push("/kudos/my-kudos");
     } else if (tabId === "new") {
-      if (onOpenKudosModal) {
-        onOpenKudosModal();
-      } else {
         router.push("/kudos/new");
-      }
     }
   };
 

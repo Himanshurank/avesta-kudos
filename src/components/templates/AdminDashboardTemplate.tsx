@@ -29,7 +29,7 @@ const AdminDashboardTemplate = ({
   const adminActions = [
     {
       label: "Give Kudos",
-      path: "/kudos/give",
+      path: "/kudos/new",
       colorClass: "",
       icon: <HandThumbUpIcon className="w-5 h-5" />,
       description: "Recognize a colleague's achievement",

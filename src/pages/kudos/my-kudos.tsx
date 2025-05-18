@@ -71,12 +71,51 @@ export default function MyKudosPage() {
     return `${Math.floor(diffInDays / 365)} years ago`;
   };
 
+
+  const getUserRoleText = () => {
+    if (!user) return "Guest";
+    if (user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN")) {
+      return "Super Admin";
+    } else if (user.roles && user.roles.some((role) => role.name === "ADMIN")) {
+      return "Admin";
+    } else {
+      return "User";
+    }
+  };
+  
+  const renderRightSide = () => {
+    // Don't render for regular users
+    if (user && getUserRoleText() === "User") return null;
+    
+    const viewOptions = [
+      { value: "received", label: "Received" },
+      { value: "given", label: "Given" }
+    ];
+    
+    return (
+      <div className="mt-4 sm:mt-0 bg-gray-100 rounded-lg p-1 flex">
+        {viewOptions.map(option => (
+          <button
+            key={option.value}
+            onClick={() => setViewMode(option.value as "received" | "given")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === option.value
+                ? "bg-indigo-600 text-white"
+                : "text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <KudosLayout
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenKudosModal={() => router.push("/kudos/new")}
       >
         <div className="space-y-8">
           <div className="bg-white rounded-xl shadow-md p-6">
@@ -87,28 +126,7 @@ export default function MyKudosPage() {
                   View kudos you&apos;ve received and given to others
                 </p>
               </div>
-              <div className="mt-4 sm:mt-0 bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setViewMode("received")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === "received"
-                      ? "bg-indigo-600 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Received
-                </button>
-                <button
-                  onClick={() => setViewMode("given")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === "given"
-                      ? "bg-indigo-600 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Given
-                </button>
-              </div>
+              {renderRightSide()}
             </div>
 
             <div className="border-b border-gray-200 mb-6"></div>

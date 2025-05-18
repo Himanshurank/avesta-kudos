@@ -78,14 +78,14 @@ const UserDashboardTemplate = ({
   const quickActions = [
     {
       label: "Full Kudos Wall",
-      path: "/kudos/wall",
+      path: "/kudos",
       colorClass: "",
       icon: <EyeIcon className="w-5 h-5" />,
       description: "Browse all kudos across the organization",
     },
     {
       label: "My Received Kudos",
-      path: "/kudos/my-received",
+      path: "/kudos/my-kudos",
       colorClass: "",
       icon: <StarIcon className="w-5 h-5" />,
       description: "View kudos others have given you",

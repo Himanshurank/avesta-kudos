@@ -5,6 +5,7 @@ import KudosGrid from "@/components/organisms/KudosGrid";
 import GiveKudosButton from "@/components/atoms/GiveKudosButton/GiveKudosButton";
 import { TeamValue, CategoryValue } from "@/shared/enums";
 import router from "next/router";
+import { useAuthContext } from "@/components/contexts/AuthContext";
 
 interface IKudos {
   id: string;
@@ -78,13 +79,27 @@ const KudosPageTemplate = (props: IProps) => {
     setCategoryFilter,
     categoryOptions,
     filteredKudos,
-    setIsModalOpen,
     pagination,
     onPageChange,
     isLoading = false,
     className = "",
     testId,
   } = props;
+
+  const { user } = useAuthContext();
+
+  const getUserRoleText = () => {
+    if (!user) return "Guest";
+    if (user.roles && user.roles.some((role) => role.name === "SUPER_ADMIN")) {
+      return "Super Admin";
+    } else if (user.roles && user.roles.some((role) => role.name === "ADMIN")) {
+      return "Admin";
+    } else {
+      return "User";
+    }
+  };
+
+  const showGiveKudosButton = !user || getUserRoleText() !== "User";
 
   const handleClearAllFilters = () => {
     setSearchTerm("");
@@ -148,7 +163,6 @@ const KudosPageTemplate = (props: IProps) => {
     <KudosLayout
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      onOpenKudosModal={() => setIsModalOpen(true)}
     >
       <main
         className={`p-6 ${className}`}
@@ -178,7 +192,7 @@ const KudosPageTemplate = (props: IProps) => {
         )}
       </main>
 
-      <GiveKudosButton onClick={() => router.push("/kudos/new")} />
+      {showGiveKudosButton && <GiveKudosButton onClick={() => router.push("/kudos/new")} />}
     </KudosLayout>
   );
 };
