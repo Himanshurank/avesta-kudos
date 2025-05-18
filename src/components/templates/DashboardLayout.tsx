@@ -9,8 +9,6 @@ import {
   HandThumbUpIcon,
   UserGroupIcon,
   ClockIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
   ChartBarIcon,
   TagIcon,
   StarIcon,
@@ -73,10 +71,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         return <UserGroupIcon className="w-5 h-5" />;
       case "approval-queue":
         return <ClockIcon className="w-5 h-5" />;
-      case "system-settings":
-        return <Cog6ToothIcon className="w-5 h-5" />;
-      case "audit-logs":
-        return <DocumentTextIcon className="w-5 h-5" />;
       case "analytics":
         return <ChartBarIcon className="w-5 h-5" />;
       case "manage-teams":
@@ -108,8 +102,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { id: "analytics", label: "Analytics" },
         { id: "user-management", label: "User Management" },
         { id: "approval-queue", label: "Approval Queue" },
-        { id: "system-settings", label: "System Settings" },
-        { id: "audit-logs", label: "Audit Logs" },
       ];
     }
 
@@ -161,10 +153,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       router.push("/dashboard/user-management");
     } else if (tabId === "approval-queue") {
       router.push("/dashboard/approval-queue");
-    } else if (tabId === "system-settings") {
-      router.push("/dashboard/system-settings");
-    } else if (tabId === "audit-logs") {
-      router.push("/dashboard/audit-logs");
     } else if (tabId === "analytics") {
       router.push("/dashboard/analytics");
     } else if (tabId === "manage-teams") {

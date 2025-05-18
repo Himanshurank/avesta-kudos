@@ -7,8 +7,6 @@ import { User } from "@/core/domain/entities/User";
 import {
   UserGroupIcon,
   ClockIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 
 interface SuperAdminDashboardTemplateProps {
@@ -44,20 +42,6 @@ const SuperAdminDashboardTemplate = ({
       colorClass: "",
       icon: <ClockIcon className="w-5 h-5" />,
       description: "Review and approve pending user registrations",
-    },
-    {
-      label: "System Settings",
-      path: "/dashboard/system-settings",
-      colorClass: "",
-      icon: <Cog6ToothIcon className="w-5 h-5" />,
-      description: "Configure global application settings",
-    },
-    {
-      label: "Audit Logs",
-      path: "/dashboard/audit-logs",
-      colorClass: "",
-      icon: <DocumentTextIcon className="w-5 h-5" />,
-      description: "View system activity and security logs",
     },
   ];
 

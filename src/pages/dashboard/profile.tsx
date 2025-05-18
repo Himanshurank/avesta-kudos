@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import { useAuthContext } from "@/components/contexts/AuthContext";
 import { motion } from "framer-motion";
-import Avatar from "@/components/atoms/Avatar";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const cookies = parseCookies(context);
@@ -30,7 +29,6 @@ const ProfilePage = () => {
   const router = useRouter();
   const { user, loading } = useAuthContext();
   const [activeTab, setActiveTab] = useState("profile");
-  const [activeSection, setActiveSection] = useState("personalInfo");
 
   // Form state with extended user information
   const [formData, setFormData] = useState({
@@ -38,22 +36,13 @@ const ProfilePage = () => {
     email: "",
     firstName: "",
     lastName: "",
-    jobTitle: "",
-    department: "",
     bio: "",
     phoneNumber: "",
-    location: "",
   });
-
-  // Example: password change form
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
-  // Avatar state
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formTouched, setFormTouched] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     // If not loading and no user, redirect to login
@@ -74,17 +63,31 @@ const ProfilePage = () => {
         email: user.email || "",
         firstName: firstName,
         lastName: lastName,
-        jobTitle: "", // These fields don't exist in the User entity
-        department: "", // but we'll keep them in the UI for demo
         bio: "",
         phoneNumber: "",
-        location: "",
       });
-
-      // For demo purposes, we'll use a placeholder avatar
-      setAvatarPreview(null);
     }
   }, [user, loading, router]);
+
+  // Validate form fields
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
+    
+    if (formData.phoneNumber && !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Please enter a valid phone number";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Handle form input changes
   const handleInputChange = (
@@ -95,76 +98,87 @@ const ProfilePage = () => {
       ...prev,
       [name]: value,
     }));
+    
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    
+    if (!formTouched) {
+      setFormTouched(true);
+    }
   };
 
-  // Handle password form changes
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({
+  // Handle blur events for validation
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = e.target;
+    
+    // Validate specific field
+    const fieldErrors: Record<string, string> = {};
+    
+    if (name === 'firstName' && !formData.firstName.trim()) {
+      fieldErrors.firstName = "First name is required";
+    }
+    
+    if (name === 'lastName' && !formData.lastName.trim()) {
+      fieldErrors.lastName = "Last name is required";
+    }
+    
+    if (name === 'phoneNumber' && formData.phoneNumber && 
+        !/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(formData.phoneNumber)) {
+      fieldErrors.phoneNumber = "Please enter a valid phone number";
+    }
+    
+    setErrors(prev => ({
       ...prev,
-      [name]: value,
+      ...fieldErrors
     }));
   };
 
-  // Handle avatar change
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        if (event.target && typeof event.target.result === "string") {
-          setAvatarPreview(event.target.result);
-        }
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Handle profile update
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Combine first and last name for the full name
-    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-
-    // Here you would implement the API call to update the profile
-    console.log("Updating profile with name:", fullName);
-    toast.success("Profile information updated successfully!");
-  };
-
-  // Handle password update
-  const handlePasswordUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("New passwords don't match!");
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form");
       return;
     }
-
-    // Here you would implement the API call to update the password
-    toast.success("Password updated successfully!");
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    
+    setIsSubmitting(true);
+    setSuccessMessage("");
+    
+    try {
+      // Here you would implement the API call to update the profile
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success("Profile information updated successfully!");
+      setFormTouched(false);
+      setSuccessMessage("Your profile has been updated successfully!");
+      
+      // Update the user's name in context if necessary
+      // (This would depend on your auth context implementation)
+    } catch (error) {
+      toast.error("Failed to update profile. Please try again.");
+      console.error("Profile update error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // If still loading or no user, show loading screen
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-tr from-gray-50 to-indigo-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
-
-  const sectionTabs = [
-    { id: "personalInfo", label: "Personal Information" },
-    { id: "security", label: "Security & Password" },
-    { id: "preferences", label: "Preferences" },
-  ];
 
   return (
     <DashboardLayout
@@ -172,106 +186,101 @@ const ProfilePage = () => {
       setActiveTab={setActiveTab}
       user={user}
     >
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex flex-col space-y-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col space-y-8">
           {/* Profile Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-white rounded-xl shadow-sm overflow-hidden"
+            className="bg-white rounded-2xl shadow-md overflow-hidden"
           >
-            <div className="h-32 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
-            <div className="p-6 flex flex-col md:flex-row gap-6 items-start md:items-end relative">
-              <div className="absolute top-0 transform -translate-y-1/2">
-                <div className="relative group">
-                  <div className="w-24 h-24 bg-white rounded-full p-1 shadow-lg">
-                    <Avatar
-                      src={avatarPreview || undefined}
-                      alt={user.name}
-                      initials={`${formData.firstName?.[0] || ""}${
-                        formData.lastName?.[0] || ""
-                      }`}
-                      size="xl"
-                      bgColor="indigo"
-                    />
-                  </div>
-                  <label className="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 cursor-pointer shadow-md hover:bg-indigo-700 transition-colors">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarChange}
-                    />
-                  </label>
+            <div className="relative">
+              {/* Header Background with Decorative Elements */}
+              <div className="h-64 bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-500 relative overflow-hidden">
+                {/* Decorative Elements */}
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-white/30 blur-xl"></div>
+                  <div className="absolute top-20 right-10 w-40 h-40 rounded-full bg-pink-500/20 blur-xl"></div>
+                  <div className="absolute bottom-10 left-1/3 w-40 h-40 rounded-full bg-yellow-500/20 blur-xl"></div>
                 </div>
+
+                {/* Overlay Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/5 to-black/30"></div>
               </div>
-              <div className="mt-12 md:mt-0 flex-grow">
-                <h1 className="text-2xl font-bold text-gray-800">
-                  {user.name}
-                </h1>
-                <p className="text-gray-600">
-                  {formData.jobTitle || "Job Title"} •{" "}
-                  {formData.department || "Department"}
-                </p>
+
+              {/* Profile Info Section */}
+              <div className="p-8 sm:p-10 flex flex-col md:flex-row gap-8 relative">
+                {/* Avatar Container */}
+                <div className="absolute -top-20 left-8 sm:left-10 md:left-10">
+                  <div className="relative group">
+                    <div className="w-40 h-40 bg-white rounded-2xl p-1.5 shadow-xl ring-4 ring-white transition-transform group-hover:scale-105 duration-300">
+                      <div className="w-full h-full bg-indigo-600 rounded-xl flex items-center justify-center text-4xl font-bold text-white">
+                        {`${formData.firstName?.[0] || ""}${formData.lastName?.[0] || ""}`}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Info */}
+                <div className="mt-20 md:mt-0 md:ml-44 flex-grow">
+                  <h1 className="text-3xl font-bold text-gray-800">
+                    {user.name}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-2 mt-1 text-gray-600">
+                    <span className="font-medium">Product Designer</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                    <span>Design Team</span>
+                  </div>
+
+                  <div className="flex flex-wrap mt-5 gap-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                      <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                      Active
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Joined {user.createdAt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
 
           {/* Section Navigation Tabs */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="border-b border-gray-200">
-              <nav className="flex space-x-2 px-4">
-                {sectionTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveSection(tab.id)}
-                    className={`py-4 px-1 font-medium text-sm border-b-2 transition-colors ${
-                      activeSection === tab.id
-                        ? "border-indigo-600 text-indigo-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
+          <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+          
 
-            <div className="p-6">
+            <div className="p-6 sm:p-8">
               {/* Personal Information Section */}
-              {activeSection === "personalInfo" && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl"
                 >
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-1">Personal Information</h2>
+                    <p className="text-sm text-gray-500">Update your personal details and how others see you on the platform</p>
+                  </div>
+
                   <form onSubmit={handleProfileUpdate}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                      <div className="space-y-2">
                         <label
                           htmlFor="firstName"
-                          className="block text-sm font-medium text-gray-700 mb-1"
+                          className="block text-sm font-medium text-gray-700"
                         >
                           First Name
                         </label>
@@ -281,13 +290,23 @@ const ProfilePage = () => {
                           id="firstName"
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          onBlur={handleBlur}
+                          className={`block w-full rounded-lg shadow-sm px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            errors.firstName 
+                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                              : formData.firstName 
+                                ? 'border-green-300' 
+                                : 'border-gray-300'
+                          }`}
                         />
+                        {errors.firstName && (
+                          <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                        )}
                       </div>
-                      <div>
+                      <div className="space-y-2">
                         <label
                           htmlFor="lastName"
-                          className="block text-sm font-medium text-gray-700 mb-1"
+                          className="block text-sm font-medium text-gray-700"
                         >
                           Last Name
                         </label>
@@ -297,13 +316,23 @@ const ProfilePage = () => {
                           id="lastName"
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          onBlur={handleBlur}
+                          className={`block w-full rounded-lg shadow-sm px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            errors.lastName 
+                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                              : formData.lastName 
+                                ? 'border-green-300' 
+                                : 'border-gray-300'
+                          }`}
                         />
+                        {errors.lastName && (
+                          <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+                        )}
                       </div>
-                      <div>
+                      <div className="space-y-2 md:col-span-2">
                         <label
                           htmlFor="email"
-                          className="block text-sm font-medium text-gray-700 mb-1"
+                          className="block text-sm font-medium text-gray-700"
                         >
                           Email
                         </label>
@@ -313,17 +342,17 @@ const ProfilePage = () => {
                           id="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-50"
+                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-3 bg-gray-50"
                           disabled
                         />
                         <p className="mt-1 text-xs text-gray-500">
                           Email cannot be changed. Contact admin for assistance.
                         </p>
                       </div>
-                      <div>
+                      <div className="space-y-2">
                         <label
                           htmlFor="phoneNumber"
-                          className="block text-sm font-medium text-gray-700 mb-1"
+                          className="block text-sm font-medium text-gray-700"
                         >
                           Phone Number
                         </label>
@@ -333,61 +362,36 @@ const ProfilePage = () => {
                           id="phoneNumber"
                           value={formData.phoneNumber}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          onBlur={handleBlur}
+                          placeholder="e.g. +1 (555) 123-4567"
+                          className={`block w-full rounded-lg shadow-sm px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            errors.phoneNumber 
+                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                              : formData.phoneNumber 
+                                ? 'border-green-300' 
+                                : 'border-gray-300'
+                          }`}
                         />
+                        {errors.phoneNumber && (
+                          <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
+                        )}
                       </div>
-                      <div>
-                        <label
-                          htmlFor="jobTitle"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Job Title
-                        </label>
-                        <input
-                          type="text"
-                          name="jobTitle"
-                          id="jobTitle"
-                          value={formData.jobTitle}
-                          onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
+                    </div>
+
+                    <div className="relative my-8">
+                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-gray-200"></div>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="department"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Department
-                        </label>
-                        <input
-                          type="text"
-                          name="department"
-                          id="department"
-                          value={formData.department}
-                          onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
+                      <div className="relative flex justify-start">
+                        <span className="bg-white pr-3 text-sm font-medium text-gray-500">Additional Information</span>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="location"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Location
-                        </label>
-                        <input
-                          type="text"
-                          name="location"
-                          id="location"
-                          value={formData.location}
-                          onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                      <div className="space-y-2 md:col-span-2">
                         <label
                           htmlFor="bio"
-                          className="block text-sm font-medium text-gray-700 mb-1"
+                          className="block text-sm font-medium text-gray-700"
                         >
                           Bio
                         </label>
@@ -397,283 +401,84 @@ const ProfilePage = () => {
                           rows={4}
                           value={formData.bio}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          placeholder="Tell us about yourself..."
+                          placeholder="Tell us about yourself"
+                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-3 resize-none"
                         />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Brief description for your profile. URLs are hyperlinked.
+                        </p>
                       </div>
                     </div>
-                    <div className="mt-6 flex justify-end">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        type="submit"
-                        className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                      >
-                        Save Changes
-                      </motion.button>
-                    </div>
-                  </form>
-                </motion.div>
-              )}
-
-              {/* Security & Password Section */}
-              {activeSection === "security" && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <form onSubmit={handlePasswordUpdate}>
-                    <div className="space-y-4">
-                      <div>
-                        <label
-                          htmlFor="currentPassword"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Current Password
-                        </label>
-                        <input
-                          type="password"
-                          name="currentPassword"
-                          id="currentPassword"
-                          value={passwordData.currentPassword}
-                          onChange={handlePasswordChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="newPassword"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          New Password
-                        </label>
-                        <input
-                          type="password"
-                          name="newPassword"
-                          id="newPassword"
-                          value={passwordData.newPassword}
-                          onChange={handlePasswordChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="confirmPassword"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Confirm New Password
-                        </label>
-                        <input
-                          type="password"
-                          name="confirmPassword"
-                          id="confirmPassword"
-                          value={passwordData.confirmPassword}
-                          onChange={handlePasswordChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-6 flex justify-end">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        type="submit"
-                        className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                      >
-                        Update Password
-                      </motion.button>
-                    </div>
-                  </form>
-
-                  {/* Two-Factor Authentication */}
-                  <div className="mt-8 pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Two-Factor Authentication
-                    </h3>
-                    <div className="mt-4 flex items-start">
-                      <div className="flex-shrink-0">
+                    
+                    <div className="mt-8">
+                      {successMessage && (
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          {successMessage}
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-3">
                         <button
                           type="button"
-                          className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 bg-gray-200"
-                          role="switch"
-                          aria-checked="false"
+                          disabled={isSubmitting || !formTouched}
+                          onClick={() => {
+                            if (user) {
+                              const nameParts = user.name ? user.name.split(" ") : ["", ""];
+                              const firstName = nameParts[0] || "";
+                              const lastName = nameParts.slice(1).join(" ") || "";
+                              
+                              setFormData({
+                                name: user.name || "",
+                                email: user.email || "",
+                                firstName: firstName,
+                                lastName: lastName,
+                                bio: "",
+                                phoneNumber: "",
+                              });
+                              setErrors({});
+                              setFormTouched(false);
+                              setSuccessMessage("");
+                            }
+                          }}
+                          className={`inline-flex justify-center items-center rounded-lg border py-3 px-6 text-sm font-medium shadow-sm focus:outline-none transition-all ${
+                            isSubmitting || !formTouched
+                              ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                          }`}
                         >
-                          <span className="sr-only">
-                            Enable two-factor authentication
-                          </span>
-                          <span
-                            aria-hidden="true"
-                            className="translate-x-0 pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"
-                          ></span>
+                          Reset
                         </button>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-700">
-                          Enable two-factor authentication
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Add an extra layer of security to your account.
-                        </p>
+                        <motion.button
+                          whileHover={{ scale: formTouched && !isSubmitting ? 1.02 : 1 }}
+                          whileTap={{ scale: formTouched && !isSubmitting ? 0.98 : 1 }}
+                          type="submit"
+                          disabled={isSubmitting || !formTouched}
+                          className={`inline-flex justify-center items-center rounded-lg border border-transparent py-3 px-6 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all ${
+                            isSubmitting 
+                              ? "bg-indigo-500" 
+                              : !formTouched 
+                                ? "bg-indigo-400 cursor-not-allowed" 
+                                : "bg-indigo-600 hover:bg-indigo-700"
+                          }`}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Saving...
+                            </>
+                          ) : (
+                            "Save Changes"
+                          )}
+                        </motion.button>
                       </div>
                     </div>
-                  </div>
+                  </form>
                 </motion.div>
-              )}
-
-              {/* Preferences Section */}
-              {activeSection === "preferences" && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-medium leading-6 text-gray-900">
-                        Notification Preferences
-                      </h3>
-                      <div className="mt-4 space-y-4">
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0">
-                            <input
-                              id="email-notifications"
-                              name="email-notifications"
-                              type="checkbox"
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                              defaultChecked
-                            />
-                          </div>
-                          <div className="ml-3">
-                            <label
-                              htmlFor="email-notifications"
-                              className="text-sm font-medium text-gray-700"
-                            >
-                              Email Notifications
-                            </label>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Receive email notifications when you receive kudos
-                              or when someone in your team gets kudos.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0">
-                            <input
-                              id="browser-notifications"
-                              name="browser-notifications"
-                              type="checkbox"
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
-                          </div>
-                          <div className="ml-3">
-                            <label
-                              htmlFor="browser-notifications"
-                              className="text-sm font-medium text-gray-700"
-                            >
-                              Browser Notifications
-                            </label>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Receive real-time browser notifications for new
-                              kudos and achievements.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-6 border-t border-gray-200">
-                      <h3 className="text-lg font-medium leading-6 text-gray-900">
-                        Theme Preferences
-                      </h3>
-                      <div className="mt-4 space-y-4">
-                        <div className="flex items-center space-x-4">
-                          <button
-                            type="button"
-                            className="rounded-md border-2 border-indigo-600 p-3 flex items-center justify-center"
-                          >
-                            <span className="sr-only">Light mode</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-indigo-600"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-md border-2 border-gray-300 p-3 flex items-center justify-center"
-                          >
-                            <span className="sr-only">Dark mode</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-gray-700"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-md border-2 border-gray-300 p-3 flex items-center justify-center"
-                          >
-                            <span className="sr-only">System preferences</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-gray-700"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-6 border-t border-gray-200 flex justify-end">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        type="button"
-                        className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                      >
-                        Save Preferences
-                      </motion.button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
             </div>
           </div>
         </div>
