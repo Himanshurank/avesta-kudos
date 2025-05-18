@@ -8,7 +8,6 @@ import CustomDropdown, {
 } from "@/components/molecules/CustomDropdown";
 import {
   CATEGORY_LABELS,
-  TEAM_LABELS,
   TeamValue,
   CategoryValue,
   FormErrors,
@@ -60,14 +59,6 @@ const categoryOptions: DropdownOption<CategoryValue>[] = Object.values(
   label: CATEGORY_LABELS[value],
   icon: CATEGORY_LABELS[value].split(" ")[0],
 }));
-
-// Team options
-const teamOptions: DropdownOption<TeamValue>[] = Object.values(TeamValue).map(
-  (value) => ({
-    value,
-    label: TEAM_LABELS[value],
-  })
-);
 
 const KudosForm = (props: KudosFormProps) => {
   const {
@@ -222,21 +213,6 @@ const KudosForm = (props: KudosFormProps) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <CustomDropdown
-            id="teamName"
-            name="teamName"
-            label={FormLabels.TEAM}
-            value={formData.teamName}
-            options={teamOptions}
-            onChange={(value) =>
-              handleDropdownChange("teamName", value as TeamValue)
-            }
-            placeholder={FormPlaceholders.TEAM}
-            required
-            error={errors.teamName}
-            testId={`${testId}-team`}
-          />
-
           <CustomDropdown
             id="category"
             name="category"

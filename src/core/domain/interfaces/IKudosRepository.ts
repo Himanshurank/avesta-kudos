@@ -20,6 +20,9 @@ export interface IKudosRepository {
   getAll(
     params: PaginationParams
   ): Promise<PaginatedResult<GetAllKudosApiResponse>>;
+  filter(
+    params: PaginationParams
+  ): Promise<PaginatedResult<GetAllKudosApiResponse>>;
   getById(id: number): Promise<Kudos | null>;
   getByTeam(
     teamId: number,

@@ -56,6 +56,10 @@ interface CustomDropdownProps<T extends string = string> {
    * Test ID for testing
    */
   testId?: string;
+  /**
+   * Function called when an option is selected
+   */
+  setSelectedValue?: (value: T) => void;
 }
 
 function CustomDropdown<T extends string = string>({
@@ -71,13 +75,17 @@ function CustomDropdown<T extends string = string>({
   name,
   renderOption,
   testId,
+  setSelectedValue,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -88,17 +96,23 @@ function CustomDropdown<T extends string = string>({
     };
   }, []);
 
-  const selectedOption = options.find(option => option.value === value);
+  const selectedOption = options.find((option) => option.value === value);
 
   const handleSelect = (selectedValue: T) => {
     onChange(selectedValue);
     setIsOpen(false);
+    if (setSelectedValue) {
+      setSelectedValue(selectedValue);
+    }
   };
 
-  const defaultRenderOption = (option: DropdownOption<T>, isSelected: boolean) => (
+  const defaultRenderOption = (
+    option: DropdownOption<T>,
+    isSelected: boolean
+  ) => (
     <div
       className={`px-4 py-2 cursor-pointer hover:bg-indigo-50 flex items-center ${
-        isSelected ? 'bg-indigo-100 text-indigo-800' : 'text-gray-700'
+        isSelected ? "bg-indigo-100 text-indigo-800" : "text-gray-700"
       }`}
     >
       {option.icon && <span className="mr-2">{option.icon}</span>}
@@ -119,17 +133,29 @@ function CustomDropdown<T extends string = string>({
       <div className="relative" ref={dropdownRef}>
         <div
           className={`w-full px-4 py-3 rounded-xl border ${
-            isOpen ? 'border-indigo-400 ring ring-indigo-200 ring-opacity-30' : 'border-gray-200'
+            isOpen
+              ? "border-indigo-400 ring ring-indigo-200 ring-opacity-30"
+              : "border-gray-200"
           } bg-white flex items-center justify-between cursor-pointer hover:border-indigo-400 transition-all duration-200`}
           onClick={() => setIsOpen(!isOpen)}
           data-testid={testId}
         >
-          <span className={value ? 'text-gray-800' : 'text-gray-400'}>
+          <span className={value ? "text-gray-800" : "text-gray-400"}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <div className="text-indigo-600">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
@@ -137,11 +163,13 @@ function CustomDropdown<T extends string = string>({
         {isOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white rounded-xl shadow-lg border border-gray-200 py-1 max-h-60 overflow-y-auto">
             {options.map((option) => (
-              <div key={option.value} onClick={() => handleSelect(option.value)}>
-                {renderOption 
+              <div
+                key={option.value}
+                onClick={() => handleSelect(option.value)}
+              >
+                {renderOption
                   ? renderOption(option, option.value === value)
-                  : defaultRenderOption(option, option.value === value)
-                }
+                  : defaultRenderOption(option, option.value === value)}
               </div>
             ))}
           </div>
@@ -164,4 +192,4 @@ function CustomDropdown<T extends string = string>({
   );
 }
 
-export default CustomDropdown; 
+export default CustomDropdown;

@@ -87,6 +87,31 @@ export class KudosRepositoryImpl
     };
   }
 
+  async filter(
+    params: PaginationParams
+  ): Promise<PaginatedResult<GetAllKudosApiResponse>> {
+    const path = this.getApiPath("kudos").filter;
+
+    const response = await this.httpService.get<
+      ApiKudosResponse<GetAllKudosApiResponse>
+    >({
+      path,
+      queryParams: params as Record<string, string | number | boolean>,
+    });
+
+    const kudosData = response.data;
+
+    return {
+      data: kudosData,
+      pagination: response.pagination || {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: kudosData.kudos.length,
+        pages: Math.ceil(kudosData.kudos.length / (params.limit || 10)),
+      },
+    };
+  }
+
   async getById(id: number): Promise<Kudos | null> {
     try {
       const path = this.getApiPath("kudos").getById(id);

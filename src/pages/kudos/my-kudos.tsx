@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import KudosLayout from "@/components/templates/KudosLayout";
 import KudosCard from "@/components/molecules/KudosCard/KudosCard";
-import KudosModal from "@/components/organisms/KudosModal";
-import { CategoryValue, TeamValue } from "@/shared/enums";
+
+import router from "next/router";
 
 // Mock data for demonstration
 const myReceivedKudos = [
@@ -55,25 +55,13 @@ const myGivenKudos = [
 export default function MyKudosPage() {
   const [activeTab, setActiveTab] = useState("my-kudos");
   const [viewMode, setViewMode] = useState<"received" | "given">("received");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    recipientName: "",
-    teamName: "" as TeamValue,
-    category: "" as CategoryValue,
-    message: "",
-  });
-
-  const handleFormSubmit = (data: typeof formData) => {
-    console.log("Form submitted:", data);
-    setIsModalOpen(false);
-  };
 
   return (
     <>
       <KudosLayout
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenKudosModal={() => setIsModalOpen(true)}
+        onOpenKudosModal={() => router.push("/kudos/new")}
       >
         <div className="space-y-8">
           <div className="bg-white rounded-xl shadow-md p-6">
@@ -188,13 +176,6 @@ export default function MyKudosPage() {
           </div>
         </div>
       </KudosLayout>
-
-      <KudosModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialData={formData}
-        onSubmit={handleFormSubmit}
-      />
     </>
   );
 }

@@ -920,11 +920,15 @@ Response (200 OK):
 #### Apply Saved Filter
 
 ```
-GET /kudos/filter/:filterId
+GET /kudos/filter
 ```
 
 Query Parameters:
 
+- `teamId` (optional): Filter by team ID
+- `categoryId` (optional): Filter by category ID
+- `userId` (optional): Filter by user ID
+- `type` (optional): "received" or "sent" (only used with userId, default: "received")
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 
@@ -933,31 +937,57 @@ Response (200 OK):
 ```json
 {
   "success": true,
-  "data": [
-    {
-      "id": "kudos_id",
-      "recipientName": "Jane Doe",
-      "teamName": "Engineering",
-      "category": "Helpful",
-      "message": "Thanks for helping with the project!",
-      "createdBy": {
-        "id": "user_id",
-        "name": "John Doe"
+  "data": {
+    "kudos": [
+      {
+        "id": 1,
+        "message": "Thanks for helping with the project!",
+        "createdBy": {
+          "id": 1,
+          "name": "John Doe"
+        },
+        "recipients": {
+          "id": 2,
+          "name": "Jane Doe"
+        },
+        "team": {
+          "id": 1,
+          "name": "Engineering"
+        },
+        "category": {
+          "id": 2,
+          "name": "Helpful"
+        },
+        "createdAt": "2023-04-01T12:00:00Z",
+        "updatedAt": "2023-04-01T12:00:00Z"
+      }
+    ],
+    "categories": [
+      {
+        "id": 1,
+        "name": "Helpful"
       },
-      "createdAt": "2023-04-01T12:00:00Z",
-      "updatedAt": "2023-04-01T12:00:00Z"
-    }
-  ],
+      {
+        "id": 2,
+        "name": "Teamwork"
+      }
+    ],
+    "teams": [
+      {
+        "id": 1,
+        "name": "Engineering"
+      },
+      {
+        "id": 2,
+        "name": "Marketing"
+      }
+    ]
+  },
   "pagination": {
     "page": 1,
     "limit": 10,
-    "total": 45,
-    "pages": 5
-  },
-  "filter": {
-    "id": "filter_id",
-    "name": "My Team Kudos",
-    "description": "All kudos for the engineering team"
+    "total": 20,
+    "pages": 2
   }
 }
 ```

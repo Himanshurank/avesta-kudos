@@ -2,9 +2,9 @@ import React from "react";
 import KudosLayout from "@/components/templates/KudosLayout";
 import KudosFilterPanel from "@/components/organisms/KudosFilterPanel";
 import KudosGrid from "@/components/organisms/KudosGrid";
-import KudosModal from "@/components/organisms/KudosModal";
 import GiveKudosButton from "@/components/atoms/GiveKudosButton/GiveKudosButton";
 import { TeamValue, CategoryValue } from "@/shared/enums";
+import router from "next/router";
 
 interface IKudos {
   id: string;
@@ -78,10 +78,7 @@ const KudosPageTemplate = (props: IProps) => {
     setCategoryFilter,
     categoryOptions,
     filteredKudos,
-    isModalOpen,
     setIsModalOpen,
-    formData,
-    onFormSubmit,
     pagination,
     onPageChange,
     isLoading = false,
@@ -181,14 +178,7 @@ const KudosPageTemplate = (props: IProps) => {
         )}
       </main>
 
-      <GiveKudosButton onClick={() => setIsModalOpen(true)} />
-
-      <KudosModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialData={formData}
-        onSubmit={onFormSubmit}
-      />
+      <GiveKudosButton onClick={() => router.push("/kudos/new")} />
     </KudosLayout>
   );
 };

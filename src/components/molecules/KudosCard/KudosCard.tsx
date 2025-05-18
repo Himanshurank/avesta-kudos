@@ -95,12 +95,32 @@ const KudosCard = ({
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(date);
+    // Check if the string is already in a relative format (e.g., "1 week ago")
+    if (
+      dateString.includes("ago") ||
+      dateString.includes("day") ||
+      dateString.includes("week") ||
+      dateString.includes("month") ||
+      dateString.includes("year")
+    ) {
+      return dateString;
+    }
+
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return dateString; // Return the original string if date is invalid
+      }
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(date);
+    } catch {
+      // If any error occurs during formatting, return the original string
+      return dateString;
+    }
   };
 
   const getAvatarBgColor = () => {

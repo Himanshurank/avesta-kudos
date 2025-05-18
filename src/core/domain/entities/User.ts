@@ -11,7 +11,8 @@ export class User {
     public readonly roles: Role[],
     public readonly approvalStatus: "Pending" | "Approved" | "Rejected",
     public readonly createdAt: Date,
-    public readonly updatedAt: Date
+    public readonly updatedAt: Date,
+    public readonly teamName: string
   ) {}
 
   isSuperAdmin(): boolean {
@@ -32,5 +33,9 @@ export class User {
 
   isRejected(): boolean {
     return this.approvalStatus === "Rejected";
+  }
+
+  getTeamName(): string {
+    return this.teamName;
   }
 }
