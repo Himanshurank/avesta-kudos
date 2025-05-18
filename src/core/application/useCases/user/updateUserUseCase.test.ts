@@ -76,7 +76,7 @@ describe("UpdateUserUseCase", () => {
     const updateData = { email: "newemail@example.com" };
     const updatedUser = new User(
       userId,
-      originalUser.email,
+      updateData.email,
       originalUser.name,
       originalUser.roles,
       originalUser.approvalStatus,
@@ -113,9 +113,9 @@ describe("UpdateUserUseCase", () => {
 
     const updatedUser = new User(
       userId,
-      originalUser.email,
+      updateData.email,
       updateData.name,
-      originalUser.roles,
+      [{ id: 2, name: "ADMIN" }],
       originalUser.approvalStatus,
       originalUser.createdAt,
       new Date(),
