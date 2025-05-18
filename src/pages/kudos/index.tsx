@@ -5,6 +5,7 @@ import { TeamValue, CategoryValue } from "@/shared/enums";
 import { kudosServices, createKudosServices } from "@/core/shared/di/kudos";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
+import { FilterKudosParams } from "@/core/application/useCases/kudos/FilterKudosUseCase";
 
 // Redefine the API response type to match the actual structure
 interface GetAllKudosApiResponse {
@@ -203,27 +204,45 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
       setIsLoading(true);
       try {
         // Prepare parameters for the API call
-        const params: {
-          page: number;
-          limit: number;
-          team?: string;
-          category?: string;
-          search?: string;
-        } = {
+        const params: FilterKudosParams = {
           page: currentPage,
           limit: ITEMS_PER_PAGE,
         };
 
-        // Add filter parameters if they're set
-        if (teamFilter !== "All Teams") params.team = teamFilter;
-        if (categoryFilter !== "All Categories")
-          params.category = categoryFilter;
+        // Add filter parameters if they're set - convert names to IDs
+        if (teamFilter !== "All Teams" && kudosData?.data.teams) {
+          const selectedTeam = kudosData.data.teams.find(
+            (t) => t.name === teamFilter
+          );
+          if (selectedTeam) {
+            params.teamId = selectedTeam.id;
+          }
+        }
+
+        if (categoryFilter !== "All Categories" && kudosData?.data.categories) {
+          const selectedCategory = kudosData.data.categories.find(
+            (c) => c.name === categoryFilter
+          );
+          if (selectedCategory) {
+            params.categoryId = selectedCategory.id;
+          }
+        }
+
         if (searchTerm) params.search = searchTerm;
 
-        const result = await kudosServices.getAllKudosUseCase.execute(params);
-
-        // Cast the result to the expected type
-        setKudosData(result as unknown as ApiResponseFormat);
+        // Use filterKudosUseCase when any filters are applied
+        if (
+          teamFilter !== "All Teams" ||
+          categoryFilter !== "All Categories" ||
+          searchTerm
+        ) {
+          const result = await kudosServices.filterKudosUseCase.execute(params);
+          setKudosData(result as unknown as ApiResponseFormat);
+        } else {
+          // Use getAllKudosUseCase when no filters are applied
+          const result = await kudosServices.getAllKudosUseCase.execute(params);
+          setKudosData(result as unknown as ApiResponseFormat);
+        }
       } catch (err) {
         console.error("Error fetching filtered kudos:", err);
       } finally {
@@ -266,10 +285,16 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
       setSearchTerm={setSearchTerm}
       teamFilter={teamFilter}
       setTeamFilter={setTeamFilter}
-      teamOptions={kudosData?.data.teams.map((t) => t.name) || []}
+      teamOptions={[
+        "All Teams",
+        ...(kudosData?.data.teams.map((t) => t.name) || []),
+      ]}
       categoryFilter={categoryFilter}
       setCategoryFilter={setCategoryFilter}
-      categoryOptions={kudosData?.data.categories.map((c) => c.name) || []}
+      categoryOptions={[
+        "All Categories",
+        ...(kudosData?.data.categories.map((c) => c.name) || []),
+      ]}
       filteredKudos={kudosData?.data.kudos.map(transformKudosForDisplay) || []}
       isModalOpen={isModalOpen}
       setIsModalOpen={setIsModalOpen}

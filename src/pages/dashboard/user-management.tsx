@@ -22,6 +22,7 @@ interface User {
   role: string;
   status: string;
   createdAt: string;
+  team?: string;
 }
 
 interface Pagination {
@@ -98,6 +99,7 @@ const UserManagementPage: React.FC = () => {
           createdAt: apiUser.createdAt
             ? new Date(apiUser.createdAt).toISOString().split("T")[0]
             : "Unknown date",
+          team: apiUser.teamName || "",
         }));
 
         setUsers(mappedUsers);
@@ -179,11 +181,13 @@ const UserManagementPage: React.FC = () => {
         roleIds: number;
         status: string;
         password?: string;
+        teamName?: string;
       }> = {
         name: userData.name,
         email: userData.email,
         roleIds: getRoleId(userData.role as string) || 3,
         status: userData.status,
+        teamName: userData.team || "",
       };
 
       if (userData.password.trim()) {
@@ -212,6 +216,7 @@ const UserManagementPage: React.FC = () => {
         password: userData.password,
         name: userData.name,
         roleIds: getRoleId(userData.role as string) || 3,
+        teamName: userData.team,
       });
 
       fetchUsers(pagination.currentPage, pagination.itemsPerPage);
@@ -353,6 +358,7 @@ const UserManagementPage: React.FC = () => {
                 password: "",
                 role: selectedUser.role,
                 status: selectedUser.status,
+                team: selectedUser.team || "",
               }
             : undefined
         }

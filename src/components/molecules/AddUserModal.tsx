@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import Modal from "../atoms/Modal";
 import Input from "../atoms/Input";
 import toast from "react-hot-toast";
+import { TeamValue, TEAM_LABELS } from "@/shared/enums";
+import { container } from "@/core/shared/di/container";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -18,6 +20,13 @@ export interface UserFormData {
   password: string;
   role: number | string;
   status: string;
+  team: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  description: string;
 }
 
 const AddUserModal: React.FC<AddUserModalProps> = ({
@@ -34,6 +43,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     password: "",
     role: "User",
     status: "Active",
+    team: TeamValue.ENGINEERING,
   });
 
   const [errors, setErrors] = useState({
@@ -42,6 +52,45 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     password: "",
   });
 
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+
+  // Fetch teams when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      fetchTeams();
+    }
+  }, [isOpen]);
+
+  const fetchTeams = async () => {
+    setIsLoadingTeams(true);
+    try {
+      const response = await container.httpService.get<{
+        success: boolean;
+        data: Team[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+        };
+      }>({
+        path: container.configService.getApiPaths().teams.getAll,
+        queryParams: {
+          page: 1,
+          limit: 100,
+        },
+      });
+
+      setTeams(response.data || []);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      toast.error("Failed to load teams. Using default values.");
+    } finally {
+      setIsLoadingTeams(false);
+    }
+  };
+
   // Update form data when initialData changes or mode changes
   useEffect(() => {
     if (initialData && mode === "edit") {
@@ -49,6 +98,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         ...initialData,
         // Don't overwrite with empty password in edit mode
         password: "",
+        // Set default team if not provided
+        team: initialData.team || TeamValue.ENGINEERING,
       });
     } else {
       // Reset form for add mode
@@ -58,6 +109,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         password: "",
         role: "User",
         status: "Active",
+        team: TeamValue.ENGINEERING,
       });
     }
   }, [initialData, mode, isOpen]);
@@ -126,6 +178,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
           password: formData.password,
           role: formData.role,
           status: formData.status,
+          team: formData.team,
         });
         toast.success("User updated successfully");
       } else {
@@ -141,6 +194,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         password: "",
         role: "User",
         status: "Active",
+        team: TeamValue.ENGINEERING,
       });
 
       onClose();
@@ -208,6 +262,39 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             error={errors.password}
             testId="user-password-input"
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="team"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Team
+          </label>
+          <select
+            id="team"
+            value={formData.team}
+            onChange={handleChange}
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            disabled={isLoadingTeams}
+          >
+            {isLoadingTeams ? (
+              <option>Loading teams...</option>
+            ) : teams.length > 0 ? (
+              teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))
+            ) : (
+              // Fallback to enum values if API fails
+              Object.entries(TEAM_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))
+            )}
+          </select>
         </div>
 
         <div>
