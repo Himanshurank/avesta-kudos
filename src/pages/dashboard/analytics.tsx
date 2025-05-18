@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useAuthContext } from "@/components/contexts/AuthContext";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import AnalyticsDashboardTemplate from "@/components/templates/AnalyticsDashboardTemplate";
+import { container } from "@/core/shared/di/container";
+import {
+  StatisticsResponse,
+  TimeBasedResponse,
+} from "@/core/domain/valueObjects/AnalyticsTypes";
 
 // Define interfaces for strong typing
 interface KudosReceiver {
@@ -40,124 +45,293 @@ const AnalyticsPage = () => {
 
   // State management
   const [activeTab, setActiveTab] = useState("analytics");
-  const [timeRange, setTimeRange] = useState("month");
+  const [timeRange, setTimeRange] = useState("monthly");
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [statistics, setStatistics] = useState<StatisticsResponse | null>(null);
+  const [timeBasedData, setTimeBasedData] = useState<TimeBasedResponse | null>(
+    null
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data (in a real app, this would come from API calls)
-  const topKudosReceivers: KudosReceiver[] = [
-    { id: 1, name: "Sarah Johnson", count: 18, trend: "up" },
-    { id: 2, name: "Michael Chen", count: 15, trend: "up" },
-    { id: 3, name: "David Wilson", count: 12, trend: "down" },
-    { id: 4, name: "Olivia Martinez", count: 10, trend: "same" },
-    { id: 5, name: "James Taylor", count: 8, trend: "up" },
-  ];
-
-  const topCategories: Category[] = [
-    { id: 1, name: "Teamwork", count: 42, percentage: 35 },
-    { id: 2, name: "Innovation", count: 27, percentage: 22.5 },
-    { id: 3, name: "Customer Focus", count: 24, percentage: 20 },
-    { id: 4, name: "Leadership", count: 18, percentage: 15 },
-    { id: 5, name: "Problem Solving", count: 9, percentage: 7.5 },
-  ];
+  // Get use cases from container with memoization to prevent infinite renders
+  const { getStatisticsUseCase, getTimeBasedAnalysisUseCase } = useMemo(() => {
+    return {
+      getStatisticsUseCase: container.getStatisticsUseCase,
+      getTimeBasedAnalysisUseCase: container.getTimeBasedAnalysisUseCase,
+    };
+  }, []);
 
   const timeRangeOptions: TimeRangeOption[] = [
-    { value: "week", label: "Week" },
-    { value: "month", label: "Month" },
-    { value: "quarter", label: "Quarter" },
-    { value: "year", label: "Year" },
+    { value: "weekly", label: "Week" },
+    { value: "monthly", label: "Month" },
+    { value: "quarterly", label: "Quarter" },
+    { value: "yearly", label: "Year" },
   ];
 
+  // Load analytics data
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      if (!user) return;
+
+      setAnalyticsLoading(true);
+      setError(null);
+
+      try {
+        // Get date range for queries
+        const now = new Date();
+        const startDate = new Date();
+
+        // Set start date based on time range
+        if (timeRange === "weekly") {
+          startDate.setDate(now.getDate() - 7);
+        } else if (timeRange === "monthly") {
+          startDate.setMonth(now.getMonth() - 1);
+        } else if (timeRange === "quarterly") {
+          startDate.setMonth(now.getMonth() - 3);
+        } else if (timeRange === "yearly") {
+          startDate.setFullYear(now.getFullYear() - 1);
+        }
+
+        // Format dates as ISO strings
+        const startDateString = startDate.toISOString();
+        const endDateString = now.toISOString();
+
+        // Fetch statistics data
+        const statisticsData = await getStatisticsUseCase.execute({
+          startDate: startDateString,
+          endDate: endDateString,
+        });
+
+        // Fetch time-based analysis
+        const timeBasedAnalysis = await getTimeBasedAnalysisUseCase.execute({
+          period: timeRange as "weekly" | "monthly" | "quarterly" | "yearly",
+          startDate: startDateString,
+          endDate: endDateString,
+        });
+
+        // Update state with fetched data
+        setStatistics(statisticsData);
+        setTimeBasedData(timeBasedAnalysis);
+      } catch (err) {
+        console.error("Error fetching analytics data:", err);
+        setError("Failed to load analytics data. Please try again later.");
+        toast.error("Failed to load analytics data");
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, [user, timeRange]);
+
+  // Convert API data to component format
+  const getTopKudosReceivers = (): KudosReceiver[] => {
+    if (!statistics) return [];
+
+    return statistics.topRecipients.map((recipient, index) => ({
+      id: index + 1,
+      name: recipient.name,
+      count: recipient.count,
+      trend: "up", // Note: API doesn't provide trend data, defaulting to "up"
+    }));
+  };
+
+  const getTopCategories = (): Category[] => {
+    if (!statistics) return [];
+
+    const totalCount = statistics.kudosByCategory.reduce(
+      (sum, category) => sum + category.count,
+      0
+    );
+
+    return statistics.kudosByCategory.map((category, index) => ({
+      id: index + 1,
+      name: category.category,
+      count: category.count,
+      percentage: Math.round((category.count / totalCount) * 100),
+    }));
+  };
+
   // Get summary card data
-  const getSummaryCardsData = (): SummaryCardData[] => [
-    {
-      title: "Total Kudos",
-      value: "273",
-      trend: "14.5%",
-      trendDirection: "up",
-      icon: (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="text-blue-600"
-        >
-          <path
-            d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M12 16V12"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M12 8H12.01"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-      bgColor: "bg-blue-100",
-    },
-    {
-      title: "Avg. Kudos per User",
-      value: "6.5",
-      trend: "3.8%",
-      trendDirection: "up",
-      icon: (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="text-green-600"
-        >
-          <path
-            d="M12 8V16"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M8 12H16"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-      bgColor: "bg-green-100",
-    },
-  ];
+  const getSummaryCardsData = (): SummaryCardData[] => {
+    if (!statistics) {
+      return [
+        {
+          title: "Total Kudos",
+          value: "0",
+          trend: "0%",
+          trendDirection: "up",
+          icon: (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-blue-600"
+            >
+              <path
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 16V12"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 8H12.01"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+          bgColor: "bg-blue-100",
+        },
+        {
+          title: "Avg. Kudos per User",
+          value: "0",
+          trend: "0%",
+          trendDirection: "up",
+          icon: (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-green-600"
+            >
+              <path
+                d="M12 8V16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M8 12H16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+          bgColor: "bg-green-100",
+        },
+      ];
+    }
+
+    // In a real app, calculate the trends based on previous period data
+    return [
+      {
+        title: "Total Kudos",
+        value: statistics.totalKudos.toString(),
+        trend: "14.5%", // This would be calculated based on historical data
+        trendDirection: "up",
+        icon: (
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-blue-600"
+          >
+            <path
+              d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 16V12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 8H12.01"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+        bgColor: "bg-blue-100",
+      },
+      {
+        title: "Avg. Kudos per User",
+        value: (statistics.totalKudos / 40).toFixed(1), // Would divide by actual user count
+        trend: "3.8%", // This would be calculated based on historical data
+        trendDirection: "up",
+        icon: (
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-green-600"
+          >
+            <path
+              d="M12 8V16"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8 12H16"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+        bgColor: "bg-green-100",
+      },
+    ];
+  };
 
   // Get chart data
   const getChartsData = () => [
     {
       title: "Kudos Over Time",
       description: `Displays the number of kudos given per day over the selected ${timeRange}`,
+      data: timeBasedData?.timeSeries || [],
     },
     {
       title: "Team Comparison",
       description:
         "Shows kudos received by different teams with trend analysis",
+      data: statistics?.kudosByTeam || [],
     },
   ];
 
@@ -213,17 +387,33 @@ const AnalyticsPage = () => {
       setActiveTab={setActiveTab}
       user={user}
     >
-      <AnalyticsDashboardTemplate
-        timeRangeOptions={timeRangeOptions}
-        selectedTimeRange={timeRange}
-        onTimeRangeChange={handleTimeRangeChange}
-        summaryCardsData={getSummaryCardsData()}
-        chartsData={getChartsData()}
-        topReceiversData={topKudosReceivers}
-        topCategoriesData={topCategories}
-        onViewFullReport={handleViewFullReport}
-        onExportData={handleExportData}
-      />
+      {analyticsLoading ? (
+        <div className="flex items-center justify-center h-full py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center h-full py-16">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <AnalyticsDashboardTemplate
+          timeRangeOptions={timeRangeOptions}
+          selectedTimeRange={timeRange}
+          onTimeRangeChange={handleTimeRangeChange}
+          summaryCardsData={getSummaryCardsData()}
+          chartsData={getChartsData()}
+          topReceiversData={getTopKudosReceivers()}
+          topCategoriesData={getTopCategories()}
+          onViewFullReport={handleViewFullReport}
+          onExportData={handleExportData}
+        />
+      )}
     </DashboardLayout>
   );
 };

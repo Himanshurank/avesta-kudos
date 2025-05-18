@@ -3,6 +3,7 @@ import { IHttpService } from "../../shared/interface/IHttpService";
 import { IStorageService } from "../../shared/interface/IStorageService";
 import { IAuthService } from "../../domain/interfaces/IAuthService";
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IAnalyticsRepository } from "../../domain/interfaces/IAnalyticsRepository";
 import { ConfigService } from "../../shared/services/ConfigService";
 import { HttpService } from "../../shared/services/HttpService";
 import { LoginUseCase } from "../../application/useCases/auth/LoginUseCase";
@@ -17,8 +18,12 @@ import { DeleteUserUseCase } from "../../application/useCases/user/DeleteUserUse
 import { ApproveRejectUserUseCase } from "../../application/useCases/user/ApproveRejectUserUseCase";
 import { AuthRepository } from "../../infrastructure/repositories/AuthRepository";
 import { UserRepository } from "../../infrastructure/repositories/UserRepository";
+import { AnalyticsRepositoryImpl } from "../../infrastructure/repositories/AnalyticsRepositoryImpl";
 import { AuthServiceImpl } from "../../infrastructure/auth/AuthServiceImpl";
 import { HybridStorageService } from "../services/HybridStorageService";
+import { GetStatisticsUseCase } from "@/core/application/useCases/analytics/GetStatisticsUseCase";
+import { GetTimeBasedAnalysisUseCase } from "@/core/application/useCases/analytics/GetTimeBasedAnalysisUseCase";
+import { GetTrendingKeywordsUseCase } from "@/core/application/useCases/analytics/GetTrendingKeywordsUseCase";
 
 // Create service instances
 const configService: IConfigService = new ConfigService();
@@ -31,6 +36,10 @@ const httpService: IHttpService = new HttpService(
 // Create repositories
 const authRepository = new AuthRepository(httpService, configService);
 const userRepository: IUserRepository = new UserRepository(
+  httpService,
+  configService
+);
+const analyticsRepository: IAnalyticsRepository = new AnalyticsRepositoryImpl(
   httpService,
   configService
 );
@@ -57,6 +66,15 @@ const updateUserUseCase = new UpdateUserUseCase(userRepository);
 const deleteUserUseCase = new DeleteUserUseCase(userRepository);
 const approveRejectUserUseCase = new ApproveRejectUserUseCase(userRepository);
 
+// Create analytics use cases
+const getStatisticsUseCase = new GetStatisticsUseCase(analyticsRepository);
+const getTimeBasedAnalysisUseCase = new GetTimeBasedAnalysisUseCase(
+  analyticsRepository
+);
+const getTrendingKeywordsUseCase = new GetTrendingKeywordsUseCase(
+  analyticsRepository
+);
+
 export const container = {
   // Services
   configService,
@@ -67,6 +85,7 @@ export const container = {
   // Repositories
   authRepository,
   userRepository,
+  analyticsRepository,
 
   // Auth use cases
   loginUseCase,
@@ -81,4 +100,9 @@ export const container = {
   updateUserUseCase,
   deleteUserUseCase,
   approveRejectUserUseCase,
+
+  // Analytics use cases
+  getStatisticsUseCase,
+  getTimeBasedAnalysisUseCase,
+  getTrendingKeywordsUseCase,
 };

@@ -45,4 +45,9 @@ export interface ApiPaths {
     update: (id: number) => string;
     delete: (id: number) => string;
   };
+  analytics: {
+    statistics: string;
+    timeBased: string;
+    trendingKeywords: string;
+  };
 }

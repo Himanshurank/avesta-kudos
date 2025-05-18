@@ -50,6 +50,11 @@ export class ConfigService implements IConfigService {
         update: (id: number) => `categories/${id}`,
         delete: (id: number) => `categories/${id}`,
       },
+      analytics: {
+        statistics: "analytics/kudos-statistics",
+        timeBased: "analytics/time-based",
+        trendingKeywords: "analytics/trending-keywords",
+      },
     };
   }
 }
