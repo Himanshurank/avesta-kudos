@@ -8,11 +8,13 @@ interface ChartData {
 
 interface ChartsSectionProps {
   data: ChartData[];
+  timeRange: string;
   className?: string;
 }
 
 const ChartsSection: React.FC<ChartsSectionProps> = ({
   data,
+  timeRange,
   className = "",
 }) => {
   return (
@@ -22,6 +24,7 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({
           key={index}
           title={chart.title}
           description={chart.description}
+          timeRange={timeRange}
         />
       ))}
     </div>

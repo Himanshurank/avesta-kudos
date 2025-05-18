@@ -339,7 +339,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         >
           <div className="flex items-center">
             <h1 className="text-xl font-semibold text-gray-800">
-              {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
+              {activeTab === "analytics" 
+                ? "Analytics Dashboard" 
+                : tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
             </h1>
           </div>
 
