@@ -15,6 +15,12 @@ import { kudosServices } from "@/core/shared/di/kudos";
 // Simulated map of user IDs to teams (for demo purposes)
 const userTeamMap: Record<string, TeamValue> = {};
 
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
+
 export default function NewKudos() {
   const [formData, setFormData] = useState({
     recipientName: "",
@@ -26,6 +32,8 @@ export default function NewKudos() {
   const [activeTab, setActiveTab] = useState("new");
   const [messageCount, setMessageCount] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [teamDisabled, setTeamDisabled] = useState(false);
@@ -56,7 +64,37 @@ export default function NewKudos() {
       }
     }
 
+    async function fetchCategories() {
+      try {
+        setLoadingCategories(true);
+        const response = await container.httpService.get<{
+          success: boolean;
+          data: Category[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        }>({
+          path: container.configService.getApiPaths().categories.getAll,
+          queryParams: {
+            page: 1,
+            limit: 100,
+          },
+        });
+
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories. Using default values.");
+      } finally {
+        setLoadingCategories(false);
+      }
+    }
+
     fetchUsers();
+    fetchCategories();
   }, []);
 
   const handleChange = (
@@ -91,14 +129,22 @@ export default function NewKudos() {
     label: user.name,
   }));
 
-  // Create category options from CategoryValue enum
-  const categoryOptions: DropdownOption<CategoryValue>[] = Object.values(
-    CategoryValue
-  ).map((value) => ({
-    value,
-    label: CATEGORY_LABELS[value],
-    icon: CATEGORY_LABELS[value].split(" ")[0],
-  }));
+  // Create category options from either backend data or CategoryValue enum as fallback
+  const categoryOptions: DropdownOption<CategoryValue>[] =
+    categories.length > 0
+      ? categories.map((category) => ({
+          value: category.name as CategoryValue,
+          label:
+            CATEGORY_LABELS[category.name as CategoryValue] || category.name,
+          icon: (
+            CATEGORY_LABELS[category.name as CategoryValue] || category.name
+          ).split(" ")[0],
+        }))
+      : Object.values(CategoryValue).map((value) => ({
+          value,
+          label: CATEGORY_LABELS[value],
+          icon: CATEGORY_LABELS[value].split(" ")[0],
+        }));
 
   // Handle dropdown changes
   const handleRecipientChange = (value: string) => {
@@ -119,7 +165,7 @@ export default function NewKudos() {
 
     // Show toast indicating the team was auto-selected
     if (userTeam) {
-      toast.success(`Team ${selectedUser?.team.name} automatically selected`);
+      toast.success(`Team ${userTeam} automatically selected`);
     }
   };
 
@@ -265,7 +311,9 @@ export default function NewKudos() {
                   id="teamName"
                   name="teamName"
                   type="text"
-                  value={selectedUser?.team?.name || ""}
+                  value={
+                    selectedUser?.team != null ? selectedUser?.team?.name : ""
+                  }
                   className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-30 transition-all duration-200 outline-none ${
                     teamDisabled ? "bg-gray-50" : ""
                   }`}
@@ -300,7 +348,11 @@ export default function NewKudos() {
                 value={formData.category}
                 options={categoryOptions}
                 onChange={handleCategoryChange}
-                placeholder="Select a category"
+                placeholder={
+                  loadingCategories
+                    ? "Loading categories..."
+                    : "Select a category"
+                }
                 required
                 renderOption={renderCategoryOption}
                 testId="category-dropdown"
@@ -352,7 +404,7 @@ export default function NewKudos() {
               transition={{ delay: 0.5 }}
               className="border-t border-gray-100 pt-8 flex justify-end space-x-4"
             >
-              <Link href="/">
+              <Link href="/kudos">
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.03 }}
