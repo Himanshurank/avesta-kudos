@@ -5,10 +5,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import AnalyticsDashboardTemplate from "@/components/templates/AnalyticsDashboardTemplate";
 import { container } from "@/core/shared/di/container";
-import {
-  StatisticsResponse,
-  TimeBasedResponse,
-} from "@/core/domain/valueObjects/AnalyticsTypes";
+import { StatisticsResponse } from "@/core/domain/valueObjects/AnalyticsTypes";
 
 // Define interfaces for strong typing
 interface KudosReceiver {
@@ -48,16 +45,12 @@ const AnalyticsPage = () => {
   const [timeRange, setTimeRange] = useState("monthly");
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [statistics, setStatistics] = useState<StatisticsResponse | null>(null);
-  const [timeBasedData, setTimeBasedData] = useState<TimeBasedResponse | null>(
-    null
-  );
   const [error, setError] = useState<string | null>(null);
 
   // Get use cases from container with memoization to prevent infinite renders
-  const { getStatisticsUseCase, getTimeBasedAnalysisUseCase } = useMemo(() => {
+  const { getStatisticsUseCase } = useMemo(() => {
     return {
       getStatisticsUseCase: container.getStatisticsUseCase,
-      getTimeBasedAnalysisUseCase: container.getTimeBasedAnalysisUseCase,
     };
   }, []);
 
@@ -102,16 +95,8 @@ const AnalyticsPage = () => {
           endDate: endDateString,
         });
 
-        // Fetch time-based analysis
-        const timeBasedAnalysis = await getTimeBasedAnalysisUseCase.execute({
-          period: timeRange as "weekly" | "monthly" | "quarterly" | "yearly",
-          startDate: startDateString,
-          endDate: endDateString,
-        });
-
         // Update state with fetched data
         setStatistics(statisticsData);
-        setTimeBasedData(timeBasedAnalysis);
       } catch (err) {
         console.error("Error fetching analytics data:", err);
         setError("Failed to load analytics data. Please try again later.");
@@ -128,10 +113,10 @@ const AnalyticsPage = () => {
   const getTopKudosReceivers = (): KudosReceiver[] => {
     if (!statistics) return [];
 
-    return statistics.topRecipients.map((recipient, index) => ({
+    return statistics.topReceivers.map((recipient, index) => ({
       id: index + 1,
       name: recipient.name,
-      count: recipient.count,
+      count: parseInt(recipient.receivedCount),
       trend: "up", // Note: API doesn't provide trend data, defaulting to "up"
     }));
   };
@@ -140,15 +125,15 @@ const AnalyticsPage = () => {
     if (!statistics) return [];
 
     const totalCount = statistics.kudosByCategory.reduce(
-      (sum, category) => sum + category.count,
+      (sum, category) => sum + parseInt(category.count),
       0
     );
 
     return statistics.kudosByCategory.map((category, index) => ({
       id: index + 1,
-      name: category.category,
-      count: category.count,
-      percentage: Math.round((category.count / totalCount) * 100),
+      name: category.categoryName,
+      count: parseInt(category.count),
+      percentage: Math.round((parseInt(category.count) / totalCount) * 100),
     }));
   };
 
@@ -321,19 +306,41 @@ const AnalyticsPage = () => {
   };
 
   // Get chart data
-  const getChartsData = () => [
-    {
-      title: "Kudos Over Time",
-      description: `Displays the number of kudos given per day over the selected ${timeRange}`,
-      data: timeBasedData?.timeSeries || [],
-    },
-    {
-      title: "Team Comparison",
-      description:
-        "Shows kudos received by different teams with trend analysis",
-      data: statistics?.kudosByTeam || [],
-    },
-  ];
+  const getChartsData = () => {
+    // Format labels according to the selected time range
+    const formatChartLabels = () => {
+      if (!statistics || !statistics.trendData) return [];
+
+      return statistics.trendData.map((point) => {
+        // Use periodLabel from API instead of custom formatting
+        return {
+          period: point.period,
+          label: point.periodLabel,
+          count: parseInt(point.count),
+        };
+      });
+    };
+
+    return [
+      {
+        title: "Kudos Over Time",
+        description: `Displays the number of kudos given over the selected ${timeRange}`,
+        data: statistics ? formatChartLabels() : [],
+        timePeriod: statistics?.timePeriod || timeRange,
+      },
+      {
+        title: "Team Comparison",
+        description:
+          "Shows kudos received by different teams with trend analysis",
+        data:
+          statistics?.kudosByTeam.map((team) => ({
+            label: team.teamName,
+            value: parseInt(team.count),
+            period: team.periodLabel,
+          })) || [],
+      },
+    ];
+  };
 
   // Check user authentication and authorization
   useEffect(() => {

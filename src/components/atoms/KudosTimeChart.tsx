@@ -24,25 +24,41 @@ ChartJS.register(
   Filler
 );
 
+interface TimeDataPoint {
+  period: string;
+  label: string;
+  count: number;
+}
+
 interface KudosTimeChartProps {
   timeRange: string;
   className?: string;
+  data?: TimeDataPoint[];
+  timePeriod?: string;
 }
 
 const KudosTimeChart: React.FC<KudosTimeChartProps> = ({
   timeRange,
   className = "",
+  data = [],
+  timePeriod,
 }) => {
-  // Generate appropriate labels based on the time range
+  // Generate appropriate labels based on the time range if no data is provided
   const getLabels = () => {
+    // If we have real data, use that
+    if (data && data.length > 0) {
+      return data.map((point) => point.label);
+    }
+
+    // Otherwise use fallback labels based on timeRange
     switch (timeRange) {
-      case "week":
+      case "weekly":
         return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      case "month":
+      case "monthly":
         return Array.from({ length: 30 }, (_, i) => `${i + 1}`);
-      case "quarter":
+      case "quarterly":
         return ["Jan", "Feb", "Mar"];
-      case "year":
+      case "yearly":
         return [
           "Jan",
           "Feb",
@@ -62,21 +78,25 @@ const KudosTimeChart: React.FC<KudosTimeChartProps> = ({
     }
   };
 
-  // Generate mock data based on time range
-  const generateMockData = () => {
-    const labels = getLabels();
-    return labels.map(() => Math.floor(Math.random() * 30) + 5);
+  // Get actual data counts or generate mock data
+  const getDataValues = () => {
+    if (data && data.length > 0) {
+      return data.map((point) => point.count);
+    }
+
+    // Return zeros instead of random data when no data is available
+    return getLabels().map(() => 0);
   };
 
   const labels = getLabels();
-  const data = generateMockData();
+  const dataValues = getDataValues();
 
   const chartData = {
     labels,
     datasets: [
       {
         label: "Kudos Given",
-        data,
+        data: dataValues,
         borderColor: "#6366F1",
         backgroundColor: "rgba(99, 102, 241, 0.1)",
         fill: true,
@@ -153,4 +173,4 @@ const KudosTimeChart: React.FC<KudosTimeChartProps> = ({
   );
 };
 
-export default KudosTimeChart; 
+export default KudosTimeChart;

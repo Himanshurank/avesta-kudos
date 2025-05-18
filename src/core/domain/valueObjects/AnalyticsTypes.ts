@@ -1,21 +1,39 @@
-export interface TeamCount {
-  team: string;
-  count: number;
-}
-
-export interface CategoryCount {
-  category: string;
-  count: number;
-}
-
-export interface RecipientCount {
-  name: string;
-  count: number;
-}
-
-export interface TimeSeriesPoint {
+export interface TeamData {
+  teamId: number;
+  teamName: string;
   period: string;
-  count: number;
+  periodLabel: string;
+  count: string;
+}
+
+export interface CategoryData {
+  categoryId: number;
+  categoryName: string;
+  period: string;
+  periodLabel: string;
+  count: string;
+}
+
+export interface ReceiverData {
+  userId: number;
+  name: string;
+  period: string;
+  periodLabel: string;
+  receivedCount: string;
+}
+
+export interface GiverData {
+  userId: number;
+  name: string;
+  period: string;
+  periodLabel: string;
+  givenCount: string;
+}
+
+export interface TrendData {
+  period: string;
+  periodLabel: string;
+  count: string;
 }
 
 export interface KeywordCount {
@@ -25,13 +43,17 @@ export interface KeywordCount {
 
 export interface StatisticsResponse {
   totalKudos: number;
-  kudosByTeam: TeamCount[];
-  kudosByCategory: CategoryCount[];
-  topRecipients: RecipientCount[];
+  kudosByTeam: TeamData[];
+  kudosByCategory: CategoryData[];
+  topReceivers: ReceiverData[];
+  topGivers: GiverData[];
+  trendData: TrendData[];
+  timePeriod: string;
+  timeConfig: string;
 }
 
 export interface TimeBasedResponse {
-  timeSeries: TimeSeriesPoint[];
+  timeSeries: TrendData[];
 }
 
 export interface TrendingKeywordsResponse {

@@ -4,6 +4,8 @@ import ChartCard from "@/components/molecules/ChartCard";
 interface ChartData {
   title: string;
   description: string;
+  data?: any;
+  timePeriod?: string;
 }
 
 interface ChartsSectionProps {
@@ -25,6 +27,8 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({
           title={chart.title}
           description={chart.description}
           timeRange={timeRange}
+          data={chart.data}
+          timePeriod={chart.timePeriod}
         />
       ))}
     </div>

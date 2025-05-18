@@ -20,7 +20,7 @@ export interface UserFormData {
   password: string;
   role: number | string;
   status: string;
-  team: string;
+  team: number | string;
 }
 
 interface Team {
@@ -43,7 +43,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     password: "",
     role: "User",
     status: "Active",
-    team: TeamValue.ENGINEERING,
+    team: 0,
   });
 
   const [errors, setErrors] = useState({

@@ -20,48 +20,66 @@ ChartJS.register(
   Legend
 );
 
+interface TeamDataPoint {
+  label: string;
+  value: number;
+  period: string;
+}
+
 interface TeamComparisonChartProps {
   className?: string;
+  data?: TeamDataPoint[];
 }
 
 const TeamComparisonChart: React.FC<TeamComparisonChartProps> = ({
   className = "",
+  data = [],
 }) => {
-  // Mock team data
-  const teams = [
-    "Engineering",
-    "Product",
-    "Marketing",
-    "Sales",
-    "Customer Support",
-    "HR",
-  ];
-  
-  // Mock kudos data
-  const kudosReceived = teams.map(() => Math.floor(Math.random() * 40) + 15);
-  const kudosGiven = teams.map(() => Math.floor(Math.random() * 35) + 10);
-  
-  const data = {
-    labels: teams,
-    datasets: [
-      {
-        label: "Kudos Received",
-        data: kudosReceived,
-        backgroundColor: "rgba(99, 102, 241, 0.7)",
-        borderColor: "rgba(99, 102, 241, 1)",
-        borderWidth: 1,
-        borderRadius: 4,
-      },
-      {
-        label: "Kudos Given",
-        data: kudosGiven,
-        backgroundColor: "rgba(167, 139, 250, 0.7)",
-        borderColor: "rgba(167, 139, 250, 1)",
-        borderWidth: 1,
-        borderRadius: 4,
-      },
-    ],
+  // Use real data or fallback to zero values
+  const getChartData = () => {
+    if (data && data.length > 0) {
+      return {
+        labels: data.map((item) => item.label),
+        datasets: [
+          {
+            label: "Kudos Received",
+            data: data.map((item) => item.value),
+            backgroundColor: "rgba(99, 102, 241, 0.7)",
+            borderColor: "rgba(99, 102, 241, 1)",
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+        ],
+      };
+    }
+
+    // Default teams when no data
+    const teams = [
+      "Engineering",
+      "Product",
+      "Marketing",
+      "Sales",
+      "Customer Support",
+      "HR",
+    ];
+
+    // Return zero values instead of random data
+    return {
+      labels: teams,
+      datasets: [
+        {
+          label: "Kudos Received",
+          data: teams.map(() => 0),
+          backgroundColor: "rgba(99, 102, 241, 0.7)",
+          borderColor: "rgba(99, 102, 241, 1)",
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    };
   };
+
+  const chartData = getChartData();
 
   const options = {
     responsive: true,
@@ -116,9 +134,9 @@ const TeamComparisonChart: React.FC<TeamComparisonChartProps> = ({
 
   return (
     <div className={`w-full h-64 ${className}`}>
-      <Bar data={data} options={options} />
+      <Bar data={chartData} options={options} />
     </div>
   );
 };
 
-export default TeamComparisonChart; 
+export default TeamComparisonChart;

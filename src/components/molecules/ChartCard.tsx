@@ -7,6 +7,8 @@ interface ChartCardProps {
   description: string;
   timeRange?: string;
   className?: string;
+  data?: any;
+  timePeriod?: string;
 }
 
 const ChartCard: React.FC<ChartCardProps> = ({
@@ -14,13 +16,21 @@ const ChartCard: React.FC<ChartCardProps> = ({
   description,
   timeRange = "month",
   className = "",
+  data = [],
+  timePeriod,
 }) => {
   const renderChart = () => {
     switch (title) {
       case "Kudos Over Time":
-        return <KudosTimeChart timeRange={timeRange} />;
+        return (
+          <KudosTimeChart
+            timeRange={timeRange}
+            data={data}
+            timePeriod={timePeriod}
+          />
+        );
       case "Team Comparison":
-        return <TeamComparisonChart />;
+        return <TeamComparisonChart data={data} />;
       default:
         return (
           <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-48">

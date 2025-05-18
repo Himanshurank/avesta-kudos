@@ -181,15 +181,15 @@ const UserManagementPage: React.FC = () => {
         roleIds: number;
         status: string;
         password?: string;
-        teamName?: string;
+        teamId?: number;
       }> = {
         name: userData.name,
         email: userData.email,
         roleIds: getRoleId(userData.role as string) || 3,
         status: userData.status,
-        teamName: userData.team || "",
+        teamId: Number(userData.team),
       };
-
+      console.log(dataToUpdate);
       if (userData.password.trim()) {
         dataToUpdate.password = userData.password;
       }
@@ -216,7 +216,7 @@ const UserManagementPage: React.FC = () => {
         password: userData.password,
         name: userData.name,
         roleIds: getRoleId(userData.role as string) || 3,
-        teamName: userData.team,
+        teamId: Number(userData.team),
       });
 
       fetchUsers(pagination.currentPage, pagination.itemsPerPage);
