@@ -17,6 +17,12 @@ export interface IHttpService {
     headers?: Record<string, string>;
   }): Promise<T>;
 
+  patch<T>(params: {
+    path: string;
+    body: Record<string, unknown>;
+    headers?: Record<string, string>;
+  }): Promise<T>;
+
   delete<T>(params: {
     path: string;
     body?: Record<string, unknown>;

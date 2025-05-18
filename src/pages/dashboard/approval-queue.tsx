@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import ApprovalQueueTemplate from "@/components/templates/ApprovalQueueTemplate";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
+import { container } from "@/core/shared/di/container";
+import { User } from "@/core/domain/entities/User";
 
 // Interface for pending user data
 interface PendingUser {
@@ -20,34 +22,42 @@ const ApprovalQueuePage = () => {
   const router = useRouter();
   const { user, loading } = useAuthContext();
   const [activeTab, setActiveTab] = useState("approval-queue");
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for pending users
-  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([
-    {
-      id: 5,
-      name: "Alex Johnson",
-      email: "alex@example.com",
-      requestedRole: "User",
-      department: "Marketing",
-      registeredAt: "2023-06-12 09:45 AM",
-    },
-    {
-      id: 6,
-      name: "Jessica Williams",
-      email: "jessica@example.com",
-      requestedRole: "Admin",
-      department: "Engineering",
-      registeredAt: "2023-06-13 02:30 PM",
-    },
-    {
-      id: 7,
-      name: "Robert Brown",
-      email: "robert@example.com",
-      requestedRole: "User",
-      department: "Sales",
-      registeredAt: "2023-06-14 11:15 AM",
-    },
-  ]);
+  // Fetch pending users
+  const fetchPendingUsers = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await container.getAllUsersUseCase.execute({
+        approvalStatus: "Pending",
+      });
+
+      // Map API response to the format expected by the UI
+      const mappedUsers = result.users.map((apiUser: User) => ({
+        id: apiUser.id,
+        name: apiUser.name,
+        email: apiUser.email,
+        requestedRole: Array.isArray(apiUser.roles)
+          ? apiUser.roles[0]?.name || "User"
+          : "User",
+        department: apiUser.team?.name || "Unassigned",
+        registeredAt: apiUser.createdAt
+          ? new Date(apiUser.createdAt).toLocaleString()
+          : "Unknown",
+      }));
+
+      setPendingUsers(mappedUsers);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching pending users:", err);
+      setError("Failed to load pending users. Please try again.");
+      setIsLoading(false);
+    }
+  };
 
   // Check authentication and authorization
   useEffect(() => {
@@ -69,17 +79,52 @@ const ApprovalQueuePage = () => {
     }
   }, [user, loading, router]);
 
+  // Fetch pending users when component mounts
+  useEffect(() => {
+    if (
+      user &&
+      user.roles &&
+      user.roles.some((role) => role.name === "SUPER_ADMIN")
+    ) {
+      fetchPendingUsers();
+    }
+  }, [user]);
+
   // Event handlers
-  const handleApprove = (userId: number) => {
-    toast.success(`User approved: ID ${userId}`);
-    // In a real app, this would call an API to update the user status
-    setPendingUsers(pendingUsers.filter((user) => user.id !== userId));
+  const handleApprove = async (userId: number) => {
+    try {
+      // Ensure roleIds is always provided when approving (3 is the default User role)
+      const roleId = 3; // Default to regular User role
+
+      await container.approveRejectUserUseCase.execute(userId, {
+        approvalStatus: "Approved",
+        roleIds: roleId,
+      });
+
+      toast.success(`User approved: ID ${userId}`);
+      // Refresh the list after approval
+      fetchPendingUsers();
+    } catch (err) {
+      console.error("Error approving user:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to approve user"
+      );
+    }
   };
 
-  const handleReject = (userId: number) => {
-    toast.success(`User rejected: ID ${userId}`);
-    // In a real app, this would call an API to update the user status
-    setPendingUsers(pendingUsers.filter((user) => user.id !== userId));
+  const handleReject = async (userId: number) => {
+    try {
+      await container.approveRejectUserUseCase.execute(userId, {
+        approvalStatus: "Rejected",
+      });
+
+      toast.success(`User rejected: ID ${userId}`);
+      // Refresh the list after rejection
+      fetchPendingUsers();
+    } catch (err) {
+      console.error("Error rejecting user:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to reject user");
+    }
   };
 
   // If still loading or no user, show loading screen
@@ -101,6 +146,9 @@ const ApprovalQueuePage = () => {
         pendingUsers={pendingUsers}
         onApprove={handleApprove}
         onReject={handleReject}
+        isLoading={isLoading}
+        error={error}
+        onRetry={fetchPendingUsers}
       />
     </DashboardLayout>
   );

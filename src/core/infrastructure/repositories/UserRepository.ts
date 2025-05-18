@@ -77,7 +77,7 @@ export class UserRepository extends BaseRepository implements IUserRepository {
     data: { approvalStatus: "Approved" | "Rejected"; roleIds?: number }
   ): Promise<{ message: string }> {
     const path = `users/${id}/approval`;
-    const response = await this.httpService.put<{
+    const response = await this.httpService.patch<{
       success: boolean;
       data: { message: string };
     }>({

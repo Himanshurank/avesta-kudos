@@ -116,6 +116,27 @@ export class HttpService implements IHttpService {
     return this.handleResponse<T>(response);
   }
 
+  async patch<T>(params: {
+    path: string;
+    body: Record<string, unknown>;
+    headers?: Record<string, string>;
+  }): Promise<T> {
+    const { path, body, headers = {} } = params;
+    const url = this.createUrl(path);
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...this.getAuthHeader(),
+        ...headers,
+      },
+      body: JSON.stringify(body),
+    });
+
+    return this.handleResponse<T>(response);
+  }
+
   async delete<T>(params: {
     path: string;
     body?: Record<string, unknown>;
