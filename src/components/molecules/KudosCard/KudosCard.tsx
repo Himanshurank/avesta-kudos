@@ -179,47 +179,33 @@ const KudosCard = ({
       {/* Kudos Content with Better Spacing */}
       <div className="p-6 relative z-10">
         {/* Recipient Info */}
-        <div className="flex items-center gap-4 mb-5">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            transition={{ duration: 0.2 }}
-            className="relative"
-          >
-            <div
-              className="absolute inset-0 rounded-full blur-sm opacity-40"
-              style={{ background: categoryData.secondaryColor }}
-            ></div>
-            <Avatar
-              src={recipientImage}
-              alt={recipientName}
-              initials={getInitials(recipientName)}
-              size="lg"
-              bgColor={getAvatarBgColor()}
-              className="relative z-10 ring-2 ring-white"
-            />
-          </motion.div>
-          <div>
-            <h4 className="font-bold text-gray-700 text-lg">{recipientName}</h4>
-            <div className="flex items-center mt-1">
-              <svg
-                className="w-4 h-4 text-gray-400 mr-1"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                  clipRule="evenodd"
-                />
-              </svg>
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-2">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ duration: 0.2 }}
+              className="relative"
+            >
+              <div
+                className="absolute inset-0 rounded-full blur-sm opacity-40"
+                style={{ background: categoryData.secondaryColor }}
+              ></div>
+              <Avatar
+                src={recipientImage}
+                alt={recipientName}
+                initials={getInitials(recipientName)}
+                size="lg"
+                bgColor={getAvatarBgColor()}
+                className="relative z-10 ring-2 ring-white"
+              />
+            </motion.div>
+            <div>
+              <h4 className="font-bold text-gray-700 text-lg">{recipientName}</h4>
               <p className="text-sm font-medium text-gray-500">{teamName}</p>
             </div>
           </div>
-        </div>
 
-        {/* Category Badge */}
-        <div className="mb-4">
+          {/* Category Badge */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -276,7 +262,7 @@ const KudosCard = ({
         </div>
 
         {/* Sender Info with Date */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between mt-6 pt-4 border-gray-100">
           <div
             className="text-xs font-medium px-3 py-1 rounded-full"
             style={{
