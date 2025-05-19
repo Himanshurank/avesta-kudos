@@ -27,6 +27,7 @@ export class HttpService implements IHttpService {
     path: string,
     queryParams?: Record<string, string | number | boolean>
   ): string {
+    console.log(path, "=======================");
     const url = new URL(`${this.getBaseUrl()}/${path}`);
 
     if (queryParams) {

@@ -1,12 +1,11 @@
 [build]
-  command = "npm ci && npm install -g typescript && npm run build"
+  command = "rm -rf .next && npm ci && npm install -g typescript && npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
   NEXT_IGNORE_ESLINT = "1"
-  NODE_ENV = "production"
   CI = "false"
 
 [[plugins]]
