@@ -1,10 +1,11 @@
 [build]
-  command = "npm ci && npm run build"
+  command = "npm ci && npm install --save-dev typescript @types/react && npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+  CI = "false"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
