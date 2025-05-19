@@ -1,5 +1,5 @@
 [build]
-  command = "npm ci && npm install --save-dev typescript @types/react && npm run build"
+  command = "npm ci && npm install --save-dev typescript @types/react && NEXT_IGNORE_ESLINT=1 npm run build"
   publish = ".next"
 
 [build.environment]

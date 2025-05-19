@@ -2,12 +2,28 @@ import React from "react";
 import KudosTimeChart from "@/components/atoms/KudosTimeChart";
 import TeamComparisonChart from "@/components/atoms/TeamComparisonChart";
 
+// Import or define the specific chart data types
+interface TimeDataPoint {
+  period: string;
+  label: string;
+  count: number;
+}
+
+interface TeamDataPoint {
+  label: string;
+  value: number;
+  period: string;
+}
+
+// Use a type union to represent all possible chart data types
+type ChartDataType = TimeDataPoint[] | TeamDataPoint[];
+
 interface ChartCardProps {
   title: string;
   description: string;
   timeRange?: string;
   className?: string;
-  data?: any;
+  data?: ChartDataType;
   timePeriod?: string;
 }
 
@@ -25,12 +41,12 @@ const ChartCard: React.FC<ChartCardProps> = ({
         return (
           <KudosTimeChart
             timeRange={timeRange}
-            data={data}
+            data={data as TimeDataPoint[]}
             timePeriod={timePeriod}
           />
         );
       case "Team Comparison":
-        return <TeamComparisonChart data={data} />;
+        return <TeamComparisonChart data={data as TeamDataPoint[]} />;
       default:
         return (
           <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-48">

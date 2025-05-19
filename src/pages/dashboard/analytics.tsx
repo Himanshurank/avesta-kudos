@@ -64,17 +64,17 @@ const AnalyticsPage = () => {
   // Load analytics data
   useEffect(() => {
     const fetchAnalyticsData = async () => {
+      // Only fetch if user is authenticated
       if (!user) return;
 
       setAnalyticsLoading(true);
       setError(null);
 
       try {
-        // Get date range for queries
+        // Determine date range based on selected timeRange
         const now = new Date();
         const startDate = new Date();
 
-        // Set start date based on time range
         if (timeRange === "weekly") {
           startDate.setDate(now.getDate() - 7);
         } else if (timeRange === "monthly") {
@@ -107,7 +107,7 @@ const AnalyticsPage = () => {
     };
 
     fetchAnalyticsData();
-  }, [user, timeRange]);
+  }, [user, timeRange, getStatisticsUseCase]);
 
   // Convert API data to component format
   const getTopKudosReceivers = (): KudosReceiver[] => {

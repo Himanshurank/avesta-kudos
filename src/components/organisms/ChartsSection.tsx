@@ -1,10 +1,25 @@
 import React from "react";
 import ChartCard from "@/components/molecules/ChartCard";
 
+// Reuse the same chart data type from ChartCard
+interface TimeDataPoint {
+  period: string;
+  label: string;
+  count: number;
+}
+
+interface TeamDataPoint {
+  label: string;
+  value: number;
+  period: string;
+}
+
+type ChartDataType = TimeDataPoint[] | TeamDataPoint[];
+
 interface ChartData {
   title: string;
   description: string;
-  data?: any;
+  data?: ChartDataType;
   timePeriod?: string;
 }
 

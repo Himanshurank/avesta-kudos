@@ -41,7 +41,6 @@ const KudosTimeChart: React.FC<KudosTimeChartProps> = ({
   timeRange,
   className = "",
   data = [],
-  timePeriod,
 }) => {
   // Generate appropriate labels based on the time range if no data is provided
   const getLabels = () => {
@@ -110,6 +109,13 @@ const KudosTimeChart: React.FC<KudosTimeChartProps> = ({
     ],
   };
 
+  // Define a proper interface for the chart context
+  interface ChartContext {
+    parsed: {
+      y: number;
+    };
+  }
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -134,7 +140,7 @@ const KudosTimeChart: React.FC<KudosTimeChartProps> = ({
         boxPadding: 4,
         usePointStyle: true,
         callbacks: {
-          label: function (context: any) {
+          label: function (context: ChartContext) {
             return `Kudos: ${context.parsed.y}`;
           },
         },
