@@ -256,14 +256,7 @@ export default function KudosPage({ initialKudosData }: KudosPageProps) {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [
-    teamFilter,
-    categoryFilter,
-    searchTerm,
-    currentPage,
-    initialKudosData,
-    kudosData,
-  ]);
+  }, [teamFilter, categoryFilter, searchTerm, currentPage]);
 
   // Form submission handler
   const handleFormSubmit = (data: typeof formData) => {
