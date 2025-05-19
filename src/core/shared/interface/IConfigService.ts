@@ -5,7 +5,6 @@ export interface IConfigService {
 
 export interface AppConfig {
   apiBaseUrl: string;
-  environment: string;
 }
 
 export interface ApiPaths {
