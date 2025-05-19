@@ -7,6 +7,7 @@
   NPM_FLAGS = "--legacy-peer-deps"
   NEXT_IGNORE_ESLINT = "1"
   CI = "false"
+  NEXT_PUBLIC_API_BASE_URL = "https://digital-kudos.onrender.com/api"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
