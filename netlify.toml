@@ -1,10 +1,12 @@
 [build]
-  command = "npm ci && npm install typescript @types/react --no-save && NEXT_IGNORE_ESLINT=1 NODE_OPTIONS=--max_old_space_size=4096 npm run build"
+  command = "npm ci && npm install -g typescript && npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+  NEXT_IGNORE_ESLINT = "1"
+  NODE_ENV = "production"
   CI = "false"
 
 [[plugins]]
